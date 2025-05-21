@@ -11,9 +11,7 @@ const path = require("path");
 const db = require("./config/db");
 const { errorHandle } = require("./middlewares/errorMiddleware");
 
-const authRouter = require("./routes/authRouter");
-const uploadRouter = require("./routes/uploadRouter");
-const userRouter = require("./routes/userRouter");
+const routes = require("./routes/index");
 
 const User = require("./models/UserModel");
 
@@ -84,9 +82,7 @@ app.get("/", (req, res) => {
   res.send("Hello World!dasdasd");
 });
 
-app.use("/api/auth", authRouter);
-app.use("/api/upload", uploadRouter);
-app.use("/api/user", userRouter);
+app.use("/api", routes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(
   cors({

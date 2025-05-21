@@ -53,22 +53,6 @@ const adminMiddleware = (req, res, next) => {
     res.status(403).json({ message: "Access denied: Admins only" });
   }
 };
-const staffMiddleware = (req, res, next) => {
-  if (req.user && req.user.role === "STAFF") {
-    next(); // Cho phép nhân viên và admin tiếp tục
-  } else {
-    res.status(403).json({ message: "Access denied: Staff only" });
-  }
-};
-
-const mktMiddleware = (req, res, next) => {
-  if (req.user && req.user.role === "MARKETING") {
-    next(); // User is mkt, proceed to the next middleware
-  } else {
-    res.status(403).json({ message: "Access denied: marketing only" });
-  }
-};
-
 
 const roleMiddleware = (allowedRoles) => (req, res, next) => {
   if (req.user && allowedRoles.includes(req.user.role)) {
@@ -83,7 +67,5 @@ module.exports = {
   protect,
   adminMiddleware,
   generateRefreshToken,
-  staffMiddleware,
   roleMiddleware,
-  mktMiddleware,
 };
