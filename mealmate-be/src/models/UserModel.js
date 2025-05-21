@@ -1,20 +1,16 @@
 const mongoose = require("mongoose");
-const validator = require("validator");
 
 const UserSchema = new mongoose.Schema(
   {
-    full_name: { type: String, require: true },
-    email: {
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: true,
+    },
+    full_name: {
       type: String,
-      require: true,
-      unique: true,
+      required: true,
       trim: true,
-      lowercase: true,
-      validate(value) {
-        if (!validator.isEmail(value)) {
-          throw new Error("Invalid email");
-        }
-      },
     },
     phone: {
       type: String,
@@ -24,27 +20,25 @@ const UserSchema = new mongoose.Schema(
         }
       },
     },
-    password_hash: {
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      default: "other",
+    },
+    date_of_birth: {
+      type: Date,
+    },
+    job: {
       type: String,
       trim: true,
-      require: true,
-      minlength: 8,
-      validate(value) {
-        if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
-          throw new Error(
-            "Password must contain at least one letter and one number"
-          );
-        }
-      },
-      private: true,
     },
-    role: { type: String, default: "USER" },
-    isActive: { type: Boolean, default: true },
-    refreshToken: { type: String },
-    authProvider: {
-      type: String,
-      enum: ["local", "google"],
-      default: "local",
+    height: {
+      type: Number, // cm
+      min: 0,
+    },
+    weight: {
+      type: Number, // kg
+      min: 0,
     },
   },
   { timestamps: true }
