@@ -40,6 +40,23 @@ const UserSchema = new mongoose.Schema(
       type: Number, // kg
       min: 0,
     },
+    // 🎯 Mục tiêu dinh dưỡng hàng ngày
+    calorieGoal: {
+      type: Number,
+      default: 2000, // giá trị mặc định nếu không nhập
+    },
+    proteinGoal: {
+      type: Number,
+      default: 50, // gram
+    },
+    fatGoal: {
+      type: Number,
+      default: 70, // gram
+    },
+    carbGoal: {
+      type: Number,
+      default: 250, // gram
+    },
   },
   { timestamps: true }
 );
