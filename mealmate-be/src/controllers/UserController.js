@@ -1,50 +1,109 @@
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
+
 const User = require("../models/UserModel");
 
 const updateUserProfile = asyncHandler(async (req, res) => {
-  const { full_name, phone } = req.body;
+  const {
+    _id,
+    full_name,
+    phone,
+    gender,
+    date_of_birth,
+    job,
+    height,
+    weight,
+    calorieGoal,
+    proteinGoal,
+    fatGoal,
+    carbGoal,
+  } = req.body;
 
-  try {
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Cập nhật chỉ những trường hợp lệ
-    const updatedFields = {};
-    if (full_name) updatedFields.full_name = full_name;
-    if (phone) {
-      if (!/^\d{10}$/.test(phone)) {
-        return res
-          .status(400)
-          .json({ message: "Phone number must be exactly 10 digits" });
-      }
-      updatedFields.phone = phone;
-    }
-
-    // Chỉ update những trường hợp lệ, tránh ảnh hưởng password_hash
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      updatedFields,
-      {
-        new: true, // Trả về user sau khi cập nhật
-        runValidators: true, // Kiểm tra validate trong model
-      }
-    );
-
-    res.json({
-      _id: updatedUser._id,
-      full_name: updatedUser.full_name,
-      phone: updatedUser.phone,
-      email: updatedUser.email,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+  // Validate _id
+  if (!_id || !mongoose.Types.ObjectId.isValid(_id)) {
+    res.status(400);
+    throw new Error("Valid user ID is required");
   }
+
+  // Find the user by ID
+  const user = await User.findById(_id);
+  if (!user) {
+    console.error(`User not found for _id: ${_id}`);
+    res.status(404);
+    throw new Error("Người dùng không tồn tại");
+  }
+
+  // Build the updated fields object
+  const updatedFields = {};
+
+  if (full_name) updatedFields.full_name = full_name.trim();
+  if (phone) {
+    if (!/^\d{10}$/.test(phone)) {
+      res.status(400);
+      throw new Error("Phone number must be exactly 10 digits");
+    }
+    updatedFields.phone = phone;
+  }
+  if (gender && ["male", "female", "other"].includes(gender)) {
+    updatedFields.gender = gender;
+  }
+  if (date_of_birth) {
+    const parsedDate = new Date(date_of_birth);
+    if (!isNaN(parsedDate)) {
+      updatedFields.date_of_birth = parsedDate;
+    } else {
+      res.status(400);
+      throw new Error("Invalid date of birth");
+    }
+  }
+  if (job) updatedFields.job = job.trim();
+  if (height !== undefined && height >= 0) {
+    updatedFields.height = Number(height);
+  }
+  if (weight !== undefined && weight >= 0) {
+    updatedFields.weight = Number(weight);
+  }
+  if (calorieGoal !== undefined && calorieGoal >= 0) {
+    updatedFields.calorieGoal = Number(calorieGoal);
+  }
+  if (proteinGoal !== undefined && proteinGoal >= 0) {
+    updatedFields.proteinGoal = Number(proteinGoal);
+  }
+  if (fatGoal !== undefined && fatGoal >= 0) {
+    updatedFields.fatGoal = Number(fatGoal);
+  }
+  if (carbGoal !== undefined && carbGoal >= 0) {
+    updatedFields.carbGoal = Number(carbGoal);
+  }
+
+  // Update the user with validated fields
+  const updatedUser = await User.findByIdAndUpdate(
+    _id,
+    { $set: updatedFields },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  // Return the updated user data
+  res.status(200).json({
+    _id: updatedUser._id,
+    full_name: updatedUser.full_name,
+    phone: updatedUser.phone,
+    gender: updatedUser.gender,
+    date_of_birth: updatedUser.date_of_birth,
+    job: updatedUser.job,
+    height: updatedUser.height,
+    weight: updatedUser.weight,
+    calorieGoal: updatedUser.calorieGoal,
+    proteinGoal: updatedUser.proteinGoal,
+    fatGoal: updatedUser.fatGoal,
+    carbGoal: updatedUser.carbGoal,
+    createdAt: updatedUser.createdAt,
+    updatedAt: updatedUser.updatedAt,
+  });
 });
 
 const deleteUser = asyncHandler(async (req, res) => {

@@ -2,184 +2,220 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
+const validator = require("validator");
 
+const Account = require("../models/AccountModel");
 const User = require("../models/UserModel");
+
 const { generateToken, generateRefreshToken } = require("../middlewares/Auth");
 
 const register = asyncHandler(async (req, res) => {
   const { full_name, email, password, phone } = req.body;
 
-  try {
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+  // Validate inputs
+  if (!email || !validator.isEmail(email)) {
+    res.status(400);
+    throw new Error("Invalid email");
+  }
+  if (!password || password.length < 6) {
+    res.status(400);
+    throw new Error(
+      "Password must be at least 6 characters and contain at least one letter and one number"
+    );
+  }
+  if (!full_name) {
+    res.status(400);
+    throw new Error("Full name is required");
+  }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+  // Check if account already exists
+  const accountExists = await Account.findOne({ email });
+  if (accountExists) {
+    res.status(400);
+    throw new Error("Account already exists");
+  }
 
-    const user = await User.create({
-      full_name,
-      email,
-      password_hash: hashedPassword,
-      phone,
+  // Hash password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Create new account
+  const account = await Account.create({
+    email,
+    password_hash: hashedPassword,
+    role: "USER",
+    isActive: true,
+    authProvider: "local",
+  });
+
+  // Create corresponding user
+  const user = await User.create({
+    account: account._id,
+    full_name,
+    phone,
+  });
+
+  if (account && user) {
+    const accessToken = generateToken(account._id);
+    const refreshToken = generateRefreshToken(account._id);
+
+    // Save refresh token to account
+    account.refreshToken = refreshToken;
+    await account.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
     });
 
-    if (user) {
-      const accessToken = generateToken(user._id);
-      const refreshToken = generateRefreshToken(user._id);
-
-      user.refreshToken = refreshToken;
-      await user.save();
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "Strict",
-        maxAge: 1 * 24 * 60 * 60 * 1000,
-      });
-
-      res.status(201).json({
-        _id: user._id,
-        full_name: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        accessToken,
-      });
-    } else {
-      return res.status(400).json({ message: "Invalid user data" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(201).json({
+      _id: account._id,
+      full_name: user.full_name,
+      email: account.email,
+      phone: user.phone,
+      role: account.role,
+      accessToken,
+    });
+  } else {
+    res.status(400);
+    throw new Error("Invalid account or user data");
   }
 });
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  try {
-    const user = await User.findOne({ email });
 
-    if (user && (await bcrypt.compare(password, user.password_hash))) {
-      const accessToken = generateToken(user._id);
-      const refreshToken = generateRefreshToken(user._id);
+  // Validate inputs
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Email and password are required");
+  }
 
-      user.refreshToken = refreshToken;
-      await user.save();
+  // Find account
+  const account = await Account.findOne({ email });
+  if (!account || !account.isActive) {
+    res.status(401);
+    throw new Error("Invalid credentials or account is inactive");
+  }
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "Strict",
-        maxAge: 1 * 24 * 60 * 60 * 1000,
-      });
+  // Compare password
+  if (await bcrypt.compare(password, account.password_hash)) {
+    const accessToken = generateToken(account._id);
+    const refreshToken = generateRefreshToken(account._id);
 
-      res.json({ accessToken, role: user.role });
-    } else {
-      res.status(401).json({ message: "Invalid credentials" });
-    }
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    // Save refresh token
+    account.refreshToken = refreshToken;
+    await account.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // Get corresponding user data
+    const user = await User.findOne({ account: account._id });
+
+    res.json({
+      accessToken,
+      role: account.role,
+      full_name: user ? user.full_name : "",
+      phone: user ? user.phone : "",
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid credentials");
   }
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(401).json({ message: "Không tìm thấy refresh token" });
-    }
-
-    const user = await User.findOne({ refreshToken });
-    if (!user) {
-      return res.status(403).json({ message: "Refresh token không hợp lệ" });
-    }
-
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-      if (err) {
-        console.error("❌ JWT Verify lỗi:", err);
-        return res.status(403).json({ message: "Refresh token không hợp lệ" });
-      }
-
-      if (user._id.toString() !== decoded.id) {
-        return res.status(403).json({ message: "Refresh token không hợp lệ" });
-      }
-
-      const newAccessToken = generateToken(user._id);
-      res.json({ accessToken: newAccessToken });
-    });
-  } catch (error) {
-    console.error("❌ Lỗi trong refreshAccessToken:", error);
-    res.status(500).json({ message: "Lỗi server", error: error.message });
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    res.status(401);
+    throw new Error("No refresh token provided");
   }
+
+  // Find account with refresh token
+  const account = await Account.findOne({ refreshToken });
+  if (!account) {
+    res.status(403);
+    throw new Error("Invalid refresh token");
+  }
+
+  // Verify refresh token
+  jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+    if (err || account._id.toString() !== decoded.id) {
+      res.status(403);
+      throw new Error("Invalid refresh token");
+    }
+
+    const newAccessToken = generateToken(account._id);
+    res.json({ accessToken: newAccessToken });
+  });
 });
 
 const logout = asyncHandler(async (req, res) => {
-  try {
-    const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.cookies.refreshToken;
 
-    if (!refreshToken) {
-      return res.status(200).json({ message: "Bạn đã đăng xuất" });
-    }
-
-    const user = await User.findOne({ refreshToken });
-
-    if (!user) {
-      return res.status(200).json({ message: "Bạn đã đăng xuất" });
-    }
-
-    user.refreshToken = null;
-    await user.save(); // Xóa refreshToken khỏi DB
-
-    req.logOut((err) => {
-      if (err) {
-        return res.status(500).json({ message: "Lỗi khi logout" });
-      }
-
-      res.clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "Strict",
-      });
-
-      return res.json({ message: "Logout thành công" });
-    });
-  } catch (error) {
-    return res.status(500).json({ message: "Lỗi server khi logout" });
+  if (!refreshToken) {
+    return res.status(200).json({ message: "Already logged out" });
   }
+
+  // Find account with refresh token
+  const account = await Account.findOne({ refreshToken });
+  if (account) {
+    account.refreshToken = null;
+    await account.save();
+  }
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+  });
+
+  res.json({ message: "Logout successful" });
 });
 
 const googleAuth = asyncHandler(async (req, res) => {
-  try {
-    const { email, full_name } = req.user;
+  const { email, full_name } = req.user;
 
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = await User.create({
-        full_name,
-        email,
-        authProvider: "google",
-      });
-    }
-
-    const accessToken = generateToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
-
-    user.refreshToken = refreshToken;
-    await user.save();
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "Strict",
+  // Find or create account
+  let account = await Account.findOne({ email });
+  if (!account) {
+    account = await Account.create({
+      email,
+      authProvider: "google",
+      role: "USER",
+      isActive: true,
     });
 
-    return res.redirect(
-      `http://localhost:3000/login-success?token=${accessToken}`
-    );
-  } catch (error) {
-    return res.redirect("http://localhost:3000/login?error=google_auth_failed");
+    // Create corresponding user
+    await User.create({
+      account: account._id,
+      full_name,
+    });
   }
+
+  const accessToken = generateToken(account._id);
+  const refreshToken = generateRefreshToken(account._id);
+
+  // Save refresh token
+  account.refreshToken = refreshToken;
+  await account.save();
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+    maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+  });
+
+  return res.redirect(
+    `http://localhost:3000/login-success?token=${accessToken}`
+  );
 });
 
 const sendEmail = ({ recipient_email, newPassword }) => {
@@ -221,7 +257,7 @@ const sendEmail = ({ recipient_email, newPassword }) => {
 
     transporter.sendMail(mail_configs, (error, info) => {
       if (error) {
-        console.error(error);
+        console.error("Error sending email:", error);
         return reject({ message: "An error occurred while sending email." });
       }
       return resolve({ message: "Email sent successfully." });
@@ -230,35 +266,36 @@ const sendEmail = ({ recipient_email, newPassword }) => {
 };
 
 const forgotPassword = asyncHandler(async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Vui lòng nhập email!" });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "Không tìm thấy người dùng!" });
-    }
-
-    const newPassword = Math.random().toString(36).slice(-8);
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    user.password_hash = hashedPassword;
-
-    const updatedUser = await user.save();
-    if (!updatedUser) {
-      return res.status(500).json({ message: "Lỗi khi cập nhật mật khẩu!" });
-    }
-
-    await sendEmail({ recipient_email: email, newPassword });
-
-    res.json({ message: "Mật khẩu mới đã được gửi qua email." });
-  } catch (error) {
-    console.error("🔥 Lỗi khi xử lý quên mật khẩu:", error);
-    res.status(500).json({ message: "Lỗi server, vui lòng thử lại!" });
+  const { email } = req.body;
+  if (!email || !validator.isEmail(email)) {
+    res.status(400);
+    throw new Error("Valid email is required");
   }
+
+  // Find account
+  const account = await Account.findOne({ email });
+  if (!account) {
+    res.status(404);
+    throw new Error("Account not found");
+  }
+
+  // Generate new password
+  const newPassword = Math.random().toString(36).slice(-8);
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Update account with new password
+  account.password_hash = hashedPassword;
+  const updatedAccount = await account.save();
+
+  if (!updatedAccount) {
+    res.status(500);
+    throw new Error("Failed to update password");
+  }
+
+  // Send email with new password
+  await sendEmail({ recipient_email: email, newPassword });
+
+  res.json({ message: "New password has been sent to your email." });
 });
 
 module.exports = {
