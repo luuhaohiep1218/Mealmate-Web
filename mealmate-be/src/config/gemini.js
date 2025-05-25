@@ -1,4 +1,5 @@
 require("dotenv").config();
+const { ingredientExtractionPrompt } = require("../utils/aiHelpers");
 
 // Khởi tạo Gemini
 
@@ -17,7 +18,7 @@ async function analyzeImageToText(filePath) {
     model: "gemini-2.0-flash",
     contents: [
       createUserContent([
-        "Hãy mô tả nội dung hình ảnh này bằng tiếng Việt.",
+        ingredientExtractionPrompt,
         createPartFromUri(fileUploadResult.uri, fileUploadResult.mimeType),
       ]),
     ],
