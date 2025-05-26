@@ -144,6 +144,22 @@ const deleteRecipe = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Xoá món ăn thành công" });
 });
+const deleteManyRecipes = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "Danh sách ID cần xoá không hợp lệ" });
+  }
+
+  const result = await Recipe.deleteMany({ _id: { $in: ids } });
+
+  res.status(200).json({
+    message: `Đã xoá ${result.deletedCount} món ăn`,
+    deletedCount: result.deletedCount,
+  });
+});
 
 module.exports = {
   getAllRecipes,
@@ -151,4 +167,5 @@ module.exports = {
   createRecipe,
   updateRecipe,
   deleteRecipe,
+  deleteManyRecipes,
 };
