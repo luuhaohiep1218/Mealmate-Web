@@ -34,11 +34,15 @@ app.use(
 app.use(express.json());
 app.use(
   session({
-    secret: "secret",
+    secret: process.env.SESSION_SECRET || "secret",
     resave: false,
     saveUninitialized: true,
   })
 );
+
+// Initialize Passport and restore authentication state from session
+app.use(passport.initialize());
+app.use(passport.session());
 
 passport.use(
   new GoogleStrategy(
@@ -49,20 +53,15 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails[0].value;
-        const full_name = profile.displayName;
+        // Get profile picture from Google profile
+        const profilePicture =
+          profile.photos && profile.photos[0] ? profile.photos[0].value : null;
 
-        let user = await User.findOne({ email });
-
-        if (!user) {
-          user = await User.create({
-            full_name,
-            email,
-            authProvider: "google",
-          });
-        }
-
-        return done(null, user);
+        return done(null, {
+          email: profile.emails[0].value,
+          full_name: profile.displayName,
+          picture: profilePicture,
+        });
       } catch (error) {
         return done(error, null);
       }
@@ -79,22 +78,20 @@ passport.deserializeUser((user, done) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello World!dasdasd");
+  res.send("Hello World!");
 });
 
+// API routes
 app.use("/api", routes);
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
 
+// Static files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Error handling
 app.use(errorHandle);
 
 const port = process.env.PORT || 8080;
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });

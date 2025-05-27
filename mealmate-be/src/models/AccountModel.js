@@ -8,7 +8,6 @@ const AccountSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      lowercase: true,
       validate(value) {
         if (!validator.isEmail(value)) {
           throw new Error("Invalid email");
@@ -18,7 +17,6 @@ const AccountSchema = new mongoose.Schema(
     password_hash: {
       type: String,
       trim: true,
-      required: true,
       minlength: 8,
       validate(value) {
         if (!value.match(/\d/) || !value.match(/[a-zA-Z]/)) {
