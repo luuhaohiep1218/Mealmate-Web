@@ -4,6 +4,7 @@ import UserAccountPage from "../pages/UserPage/UserAccountPage";
 
 import AdminLayoutComponent from "../components/Layout/AdminLayoutComponent";
 import DefaultLayoutComponent from "../components/Layout/DefaultLayoutComponent";
+import HomePage from "../pages/UserPage/HomePage";
 
 export const routes = [
   {
@@ -23,6 +24,13 @@ export const routes = [
   {
     path: "/account",
     page: UserAccountPage,
+    layout: DefaultLayoutComponent, // Sử dụng layout admin
+    isPrivate: true,
+    allowedRoles: ["USER"],
+  },
+  {
+    path: "/",
+    page: HomePage,
     layout: DefaultLayoutComponent, // Sử dụng layout admin
     isPrivate: true,
     allowedRoles: ["USER"],

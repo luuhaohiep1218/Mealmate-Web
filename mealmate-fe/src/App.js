@@ -2,6 +2,7 @@ import React, { Fragment } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { routes } from "./routers/index";
+import "./App.css";
 
 function App() {
   return (
