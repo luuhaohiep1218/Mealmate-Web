@@ -1,38 +1,52 @@
 import AdminDashboardPage from "../pages/AdminPage/AdminDashboardPage";
 import AdminRecipePage from "../pages/AdminPage/AdminRecipePage";
 import UserAccountPage from "../pages/UserPage/UserAccountPage";
+import HomePage from "../pages/PublicPage/HomePage";
+import LoginSuccessPage from "../pages/PublicPage/LoginSuccessGooglePage";
 
 import AdminLayoutComponent from "../components/Layout/AdminLayoutComponent";
 import DefaultLayoutComponent from "../components/Layout/DefaultLayoutComponent";
-import HomePage from "../pages/UserPage/HomePage";
 
-export const routes = [
+// Public routes (không cần đăng nhập)
+export const publicRoutes = [
+  {
+    path: "/",
+    page: HomePage,
+    layout: DefaultLayoutComponent,
+  },
+  {
+    path: "/login-success",
+    page: LoginSuccessPage,
+  },
+];
+
+// Admin routes
+export const adminRoutes = [
   {
     path: "/admin/dashboard",
     page: AdminDashboardPage,
-    layout: AdminLayoutComponent, // Sử dụng layout admin
+    layout: AdminLayoutComponent,
     isPrivate: true,
     allowedRoles: ["ADMIN"],
   },
   {
     path: "/admin/recipes",
     page: AdminRecipePage,
-    layout: AdminLayoutComponent, // Sử dụng layout admin
+    layout: AdminLayoutComponent,
     isPrivate: true,
     allowedRoles: ["ADMIN"],
   },
+];
+
+// User routes
+export const userRoutes = [
   {
     path: "/account",
     page: UserAccountPage,
-    layout: DefaultLayoutComponent, // Sử dụng layout admin
+    layout: DefaultLayoutComponent,
     isPrivate: true,
-    allowedRoles: ["USER"],
-  },
-  {
-    path: "/",
-    page: HomePage,
-    layout: DefaultLayoutComponent, // Sử dụng layout admin
-    isPrivate: true,
-    allowedRoles: ["USER"],
   },
 ];
+
+// Combine all routes
+export const routes = [...publicRoutes, ...adminRoutes, ...userRoutes];

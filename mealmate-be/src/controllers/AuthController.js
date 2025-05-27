@@ -180,42 +180,72 @@ const logout = asyncHandler(async (req, res) => {
 });
 
 const googleAuth = asyncHandler(async (req, res) => {
-  const { email, full_name } = req.user;
+  const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  // Find or create account
-  let account = await Account.findOne({ email });
-  if (!account) {
-    account = await Account.create({
-      email,
-      authProvider: "google",
-      role: "USER",
-      isActive: true,
-    });
-
-    // Create corresponding user
-    await User.create({
-      account: account._id,
-      full_name,
-    });
+  if (!req.user || !req.user.email) {
+    console.error("No user data received from Google");
+    return res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
   }
 
-  const accessToken = generateToken(account._id);
-  const refreshToken = generateRefreshToken(account._id);
+  const { email, full_name, picture } = req.user;
 
-  // Save refresh token
-  account.refreshToken = refreshToken;
-  await account.save();
+  try {
+    let account = await Account.findOne({ email });
+    let user;
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
-  });
+    if (!account) {
+      // Tạo tài khoản mới
+      account = new Account({
+        email,
+        authProvider: "google",
+        role: "USER",
+        isActive: true,
+      });
+      await account.save();
+    } else if (account.authProvider !== "google") {
+      // Nếu tài khoản dùng nhà cung cấp khác trước đó → cập nhật lại
+      account.authProvider = "google";
+      await account.save();
+    }
 
-  return res.redirect(
-    `http://localhost:3000/login-success?token=${accessToken}`
-  );
+    // Kiểm tra user gắn với account đó
+    user = await User.findOne({ account: account._id });
+
+    if (!user) {
+      user = new User({
+        account: account._id,
+        full_name,
+        profile_picture: picture,
+      });
+      await user.save();
+    } else {
+      // Nếu user đã có, cập nhật ảnh nếu có
+      user.profile_picture = picture;
+      await user.save();
+    }
+
+    // Tạo token
+    const accessToken = generateToken(account._id);
+    const refreshToken = generateRefreshToken(account._id);
+
+    // Lưu refreshToken vào DB
+    account.refreshToken = refreshToken;
+    await account.save();
+
+    // Gửi cookie refreshToken
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 ngày
+    });
+
+    // Redirect kèm accessToken
+    return res.redirect(`${FRONTEND_URL}/login-success?token=${accessToken}`);
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    return res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
+  }
 });
 
 const sendEmail = ({ recipient_email, newPassword }) => {

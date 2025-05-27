@@ -36,7 +36,7 @@ const protect = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ message: "Tài khoản không tồn tại" });
     }
 
-    req.user = account; // Lưu thông tin tài khoản vào req.user
+    req.user = account;
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {

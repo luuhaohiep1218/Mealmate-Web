@@ -12,10 +12,14 @@ const UserSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    profile_picture: {
+      type: String,
+      default: null,
+    },
     phone: {
       type: String,
       validate(value) {
-        if (!/^\d{10}$/.test(value)) {
+        if (value && !/^\d{10}$/.test(value)) {
           throw new Error("Phone number must be exactly 10 digits");
         }
       },

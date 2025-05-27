@@ -169,9 +169,9 @@ const getUsers = asyncHandler(async (req, res) => {
 
 const getProfileUser = asyncHandler(async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select(
-      "-password_hash -refreshToken"
-    );
+    const user = await User.findOne({ account: req.user._id })
+      .select("-password_hash -refreshToken")
+      .populate("account", "email role authProvider");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -180,18 +180,32 @@ const getProfileUser = asyncHandler(async (req, res) => {
     res.json({
       _id: user._id,
       full_name: user.full_name,
-      email: user.email,
+      email: user.account.email,
       phone: user.phone,
-      role: user.role,
-      authProvider: user.authProvider,
+      role: user.account.role,
+      authProvider: user.account.authProvider,
+      profile_picture: user.profile_picture,
+      avatar: user.profile_picture,
+      gender: user.gender,
+      date_of_birth: user.date_of_birth,
+      job: user.job,
+      height: user.height,
+      weight: user.weight,
+      calorieGoal: user.calorieGoal,
+      proteinGoal: user.proteinGoal,
+      fatGoal: user.fatGoal,
+      carbGoal: user.carbGoal,
       createdAt: user.createdAt,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    console.error("Error in getProfileUser:", error);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 });
+
 const getUserById = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).select(
