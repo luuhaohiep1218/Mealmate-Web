@@ -83,7 +83,7 @@ const register = asyncHandler(async (req, res) => {
   }
 });
 
-const login = asyncHandler(async (req, res) => {
+const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   // Validate inputs
@@ -97,6 +97,65 @@ const login = asyncHandler(async (req, res) => {
   if (!account || !account.isActive) {
     res.status(401);
     throw new Error("Invalid credentials or account is inactive");
+  }
+
+  // Check if account is USER role
+  if (account.role !== "USER") {
+    res.status(403);
+    throw new Error("Access denied. This endpoint is for users only.");
+  }
+
+  // Compare password
+  if (await bcrypt.compare(password, account.password_hash)) {
+    const accessToken = generateToken(account._id);
+    const refreshToken = generateRefreshToken(account._id);
+
+    // Save refresh token
+    account.refreshToken = refreshToken;
+    await account.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // Get corresponding user data
+    const user = await User.findOne({ account: account._id });
+
+    res.json({
+      accessToken,
+      role: account.role,
+      full_name: user ? user.full_name : "",
+      phone: user ? user.phone : "",
+    });
+  } else {
+    res.status(401);
+    throw new Error("Invalid credentials");
+  }
+});
+
+const adminLogin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validate inputs
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Email and password are required");
+  }
+
+  // Find account
+  const account = await Account.findOne({ email });
+  if (!account || !account.isActive) {
+    res.status(401);
+    throw new Error("Invalid credentials or account is inactive");
+  }
+
+  // Check if account is ADMIN role
+  if (account.role !== "ADMIN") {
+    res.status(403);
+    throw new Error("Access denied. This endpoint is for administrators only.");
   }
 
   // Compare password
@@ -330,7 +389,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
 module.exports = {
   register,
-  login,
+  userLogin,
+  adminLogin,
   refreshAccessToken,
   logout,
   googleAuth,

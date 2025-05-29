@@ -67,8 +67,9 @@ const createRecipe = asyncHandler(async (req, res) => {
     name,
     description,
     image,
-    category,
-    preparationTime,
+    prep_time,
+    cook_time,
+    total_time,
     servings,
     ingredients,
     steps,
@@ -78,38 +79,64 @@ const createRecipe = asyncHandler(async (req, res) => {
     rating,
   } = req.body;
 
+  // Validate required fields
   if (
     !name ||
     !description ||
-    !category ||
-    !preparationTime ||
+    !prep_time ||
+    !cook_time ||
     !servings ||
     !calories
   ) {
     return res.status(400).json({ message: "Thiếu thông tin bắt buộc" });
   }
 
+  // Validate ingredients array
+  if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
+    return res.status(400).json({ message: "Cần ít nhất một nguyên liệu" });
+  }
+
+  // Validate steps array
+  if (!steps || !Array.isArray(steps) || steps.length === 0) {
+    return res.status(400).json({ message: "Cần ít nhất một bước thực hiện" });
+  }
+
+  // Create new recipe with validated data
   const newRecipe = new Recipe({
-    name,
-    description,
+    name: name.trim(),
+    description: description.trim(),
     image,
-    category,
-    preparationTime,
+    prep_time,
+    cook_time,
+    total_time: total_time || prep_time + cook_time, // Calculate if not provided
     servings,
-    ingredients,
-    steps,
+    ingredients: ingredients.map((ing) => ({
+      name: ing.name.trim(),
+      quantity: ing.quantity.trim(),
+    })),
+    steps: steps.map((step) => step.trim()),
     calories,
-    nutrition,
-    tags,
-    rating,
+    nutrition: {
+      protein: nutrition?.protein || 0,
+      fat: nutrition?.fat || 0,
+      carbs: nutrition?.carbs || 0,
+    },
+    tags: tags ? tags.map((tag) => tag.trim()) : [],
+    rating: rating || 0,
   });
 
-  await newRecipe.save();
-
-  res.status(201).json({
-    message: "Tạo món ăn thành công",
-    recipe: newRecipe,
-  });
+  try {
+    await newRecipe.save();
+    res.status(201).json({
+      message: "Tạo món ăn thành công",
+      recipe: newRecipe,
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Lỗi khi tạo món ăn",
+      error: error.message,
+    });
+  }
 });
 
 const updateRecipe = asyncHandler(async (req, res) => {

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { ReactComponent as LogoIcon } from "../../assets/logo.svg";
 import GlobalStyle from "../GlobalStyle";
 import ModalSignInComponent from "../ModalComponent/ModalSignInComponent";
 import { useMealMate } from "../../context/MealMateContext";
-import { Avatar } from "antd";
+import { Avatar, Image } from "antd";
 import { useNavigate } from "react-router-dom";
 import { UserOutlined } from "@ant-design/icons";
+import LogoImage from "../../assets/logo/logo-mealmate-removebg-preview.png";
 
 const HeaderComponent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -65,10 +65,15 @@ const HeaderComponent = () => {
       <HeaderContainer>
         <Navbar>
           <LogoWrapper onClick={() => navigate("/")}>
-            <LogoIcon />
+            <StyledImage
+              src={LogoImage}
+              alt="Mealmate Logo"
+              preview={false}
+              width={75}
+            />
             <LogoText>
-              <span>Cooks</span>
-              <span>Delight</span>
+              <span>Meal</span>
+              <span>mate</span>
             </LogoText>
           </LogoWrapper>
 
@@ -154,13 +159,15 @@ const Navbar = styled.nav`
 const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0;
   cursor: pointer;
   min-width: 140px;
+  position: relative;
+`;
 
-  svg {
-    height: 35px;
-    width: auto;
+const StyledImage = styled(Image)`
+  img {
+    object-fit: contain;
   }
 `;
 
@@ -168,14 +175,20 @@ const LogoText = styled.div`
   display: flex;
   flex-direction: column;
   line-height: 1.1;
+  margin-left: -15px;
+  position: relative;
+  z-index: 1;
 
   span {
     font-weight: 600;
-    font-size: 1.1rem;
-    color: #333;
+    font-size: 1.2rem;
 
     &:first-child {
-      margin-bottom: -2px;
+      color: #ff9f1c;
+    }
+
+    &:last-child {
+      color: #011936;
     }
   }
 `;

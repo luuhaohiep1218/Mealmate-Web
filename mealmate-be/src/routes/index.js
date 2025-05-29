@@ -6,6 +6,7 @@ const authRouter = require("../routes/authRouter");
 const uploadRouter = require("../routes/uploadRouter");
 const geminiAiRouter = require("../routes/geminiAiRouter");
 const dailyMenuRouter = require("../routes/dailyMenuRouter");
+const menuRouter = require("../routes/menuRouter");
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use("/auth", authRouter);
 router.use("/upload", uploadRouter);
 router.use("/gemini-ai", geminiAiRouter);
 router.use("/daily", dailyMenuRouter);
+router.use("/menus", menuRouter);
 
 module.exports = router;

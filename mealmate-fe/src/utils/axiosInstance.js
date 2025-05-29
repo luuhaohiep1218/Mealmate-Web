@@ -40,6 +40,9 @@ axiosInstance.interceptors.response.use(
     // Handle different error scenarios
     if (error.response) {
       const errorMessage = error.response.data?.message || "An error occurred";
+      const isLoginRequest =
+        error.config.url.includes("/auth/user/login") ||
+        error.config.url.includes("/auth/admin/login");
 
       switch (error.response.status) {
         case 400:
@@ -48,12 +51,13 @@ axiosInstance.interceptors.response.use(
           );
           break;
         case 401:
-          message.error(errorMessage || "Unauthorized. Please login again.");
-          // Clear token and user info
-          sessionStorage.removeItem("token");
-          sessionStorage.removeItem("userInfo");
-          // Redirect to login page
-          window.location.href = "/login";
+          // Only redirect to login if it's not a login request and there's a token
+          if (!isLoginRequest && sessionStorage.getItem("token")) {
+            message.error("Session expired. Please login again.");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("userInfo");
+            window.location.href = "/";
+          }
           break;
         case 403:
           message.error(
@@ -84,11 +88,13 @@ axiosInstance.interceptors.response.use(
 // API endpoints
 export const endpoints = {
   auth: {
-    login: "/auth/login",
+    userLogin: "/auth/user/login",
+    adminLogin: "/auth/admin/login",
     register: "/auth/register",
     logout: "/auth/logout",
     refreshToken: "/auth/refresh-token",
     forgotPassword: "/auth/forgot-password",
+    google: "/auth/google",
     googleCallback: "/auth/google/callback",
   },
   user: {
@@ -96,12 +102,22 @@ export const endpoints = {
     updateProfile: "/users/update-profile",
     changePassword: "/users/change-password",
   },
+  upload: "/upload",
   recipes: {
     list: "/recipes",
     detail: (id) => `/recipes/${id}`,
-    create: "/recipes/create",
+    create: "/recipes",
     update: (id) => `/recipes/${id}`,
     delete: (id) => `/recipes/${id}`,
+    deleteMany: "/recipes",
+  },
+  menus: {
+    list: "/menus",
+    detail: (id) => `/menus/${id}`,
+    create: "/menus",
+    update: (id) => `/menus/${id}`,
+    delete: (id) => `/menus/${id}`,
+    deleteMany: "/menus",
   },
 };
 
