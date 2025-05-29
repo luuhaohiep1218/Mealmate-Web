@@ -1,35 +1,64 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { api } from "../utils/axiosInstance";
+import { Spin } from "antd";
 
 const FeaturedRecipes = () => {
   const navigate = useNavigate();
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const recipesPerPage = 2;
 
-  const recipes = [
-    {
-      id: 1,
-      title: "Savory Herb-Infused Chicken",
-      description:
-        "Dive into the savory symphony of flavors with our Savory Herb-Infused Chicken. A delightful blend of fresh herbs and perfectly cooked chicken creates an unforgettable dining experience.",
-      image: "/recipes/herb-chicken.jpg",
-      cookTime: "45 mins",
-    },
-    {
-      id: 2,
-      title: "Decadent Chocolate Mousse",
-      description:
-        "Dive into the velvety indulgence of our Decadent Chocolate Mousse. A dessert that combines rich chocolate with a light, airy texture for the perfect sweet ending.",
-      image: "/recipes/chocolate-mousse.jpg",
-      cookTime: "30 mins",
-    },
-  ];
+  useEffect(() => {
+    fetchTopRatedRecipes();
+  }, []);
+
+  const fetchTopRatedRecipes = async () => {
+    try {
+      const response = await api.get("/recipes?sort=-rating&limit=6");
+      setRecipes(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching recipes:", error);
+      setLoading(false);
+    }
+  };
+
+  const handlePrevious = () => {
+    setCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentPage((prev) =>
+      Math.min(Math.ceil(recipes.length / recipesPerPage) - 1, prev + 1)
+    );
+  };
+
+  const displayedRecipes = recipes.slice(
+    currentPage * recipesPerPage,
+    (currentPage + 1) * recipesPerPage
+  );
+
+  if (loading) {
+    return (
+      <LoadingContainer>
+        <Spin size="large" />
+      </LoadingContainer>
+    );
+  }
 
   return (
     <FeaturedContainer>
       <Header>
         <Title>FEATURED RECIPES</Title>
         <NavigationButtons>
-          <NavButton aria-label="Previous recipe">
+          <NavButton
+            onClick={handlePrevious}
+            disabled={currentPage === 0}
+            aria-label="Previous recipe"
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M15 18L9 12L15 6"
@@ -40,7 +69,13 @@ const FeaturedRecipes = () => {
               />
             </svg>
           </NavButton>
-          <NavButton aria-label="Next recipe">
+          <NavButton
+            onClick={handleNext}
+            disabled={
+              currentPage >= Math.ceil(recipes.length / recipesPerPage) - 1
+            }
+            aria-label="Next recipe"
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M9 18L15 12L9 6"
@@ -55,19 +90,25 @@ const FeaturedRecipes = () => {
       </Header>
 
       <RecipeGrid>
-        {recipes.map((recipe) => (
+        {displayedRecipes.map((recipe) => (
           <RecipeCard
-            key={recipe.id}
-            onClick={() => navigate(`/recipe/${recipe.id}`)}
+            key={recipe._id}
+            onClick={() => navigate(`/recipe/${recipe._id}`)}
           >
-            <RecipeImage src={recipe.image} alt={recipe.title} />
+            <RecipeImage src={recipe.image} alt={recipe.name} />
             <RecipeContent>
-              <RecipeTitle>{recipe.title}</RecipeTitle>
+              <RecipeTitle>{recipe.name}</RecipeTitle>
               <RecipeDescription>{recipe.description}</RecipeDescription>
-              <RecipeTime>
-                <ClockIcon>⏰</ClockIcon>
-                {recipe.cookTime}
-              </RecipeTime>
+              <RecipeInfo>
+                <RecipeTime>
+                  <ClockIcon>⏰</ClockIcon>
+                  {recipe.preparationTime} mins
+                </RecipeTime>
+                <RecipeRating>
+                  <StarIcon>⭐</StarIcon>
+                  {recipe.rating.toFixed(1)}
+                </RecipeRating>
+              </RecipeInfo>
             </RecipeContent>
           </RecipeCard>
         ))}
@@ -75,6 +116,13 @@ const FeaturedRecipes = () => {
     </FeaturedContainer>
   );
 };
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+`;
 
 const FeaturedContainer = styled.section`
   padding: 3rem;
@@ -104,7 +152,7 @@ const NavigationButtons = styled.div`
 
 const NavButton = styled.button`
   background: none;
-  border: 2px solid #333;
+  border: 2px solid #ff9f1c;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -113,11 +161,18 @@ const NavButton = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #333;
+  color: #ff9f1c;
 
-  &:hover {
-    background: #333;
+  &:hover:not(:disabled) {
+    background: #ff9f1c;
     color: white;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #ccc;
+    color: #ccc;
   }
 `;
 
@@ -183,6 +238,12 @@ const RecipeDescription = styled.p`
   flex: 1;
 `;
 
+const RecipeInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
 const RecipeTime = styled.div`
   display: flex;
   align-items: center;
@@ -191,8 +252,22 @@ const RecipeTime = styled.div`
   font-size: 0.9rem;
 `;
 
+const RecipeRating = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ff9f1c;
+  font-weight: 600;
+  font-size: 0.9rem;
+`;
+
 const ClockIcon = styled.span`
   font-size: 1rem;
+`;
+
+const StarIcon = styled.span`
+  font-size: 1rem;
+  color: #ff9f1c;
 `;
 
 export default FeaturedRecipes;

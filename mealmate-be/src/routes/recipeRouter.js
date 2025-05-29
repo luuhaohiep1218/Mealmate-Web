@@ -8,7 +8,7 @@ const {
 } = require("../controllers/RecipeController");
 const { protect, adminMiddleware } = require("../middlewares/Auth");
 
-router.get("/", getAllRecipes); // GET /api/recipes
+router.get("/", getAllRecipes);
 router.post("/", protect, adminMiddleware, createRecipe);
 router.put("/:id", protect, adminMiddleware, updateRecipe);
 router.delete("/:id", protect, adminMiddleware, deleteRecipe);

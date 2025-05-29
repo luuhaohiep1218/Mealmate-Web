@@ -3,14 +3,19 @@ import { Layout, Menu } from "antd";
 import { DashboardOutlined } from "@ant-design/icons";
 import logo from "../../assets/images/logo-mealmate-removebg-preview.png"; // Import logo
 import styled from "styled-components";
-import { Link } from "react-router-dom"; // Import Link
+import { Link, useLocation } from "react-router-dom"; // Import Link and useLocation
 
 const { Sider } = Layout;
 
 // Styled components
 const SidebarContainer = styled(Sider)`
-  background-color: #f2b705;
-  color: #fff;
+  &&& {
+    background: #f2b705;
+  }
+
+  .ant-layout-sider-children {
+    background: #f2b705;
+  }
 
   &.ant-layout-sider-collapsed {
     .sidebar-header {
@@ -22,115 +27,96 @@ const SidebarContainer = styled(Sider)`
 const SidebarHeader = styled.div`
   height: 64px;
   margin: 16px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
-  color: #fff;
+  justify-content: center;
 
   img {
-    height: 48px;
+    height: ${(props) => (props.collapsed ? "32px" : "48px")};
     width: auto;
-    margin-right: 8px;
+    transition: all 0.3s ease;
   }
-
-  ${({ collapsed }) =>
-    !collapsed &&
-    `
-      justify-content: center;
-    `}
 `;
 
 const CustomMenu = styled(Menu)`
-  background-color: #f2b705;
-  color: #fff;
-  border-right: 0;
+  &&& {
+    background: #f2b705;
+    color: #fff;
+    border-right: 0;
+    margin-top: 8px;
+    padding: 0;
+  }
 
-  .ant-menu-item-selected {
-    background-color: #ffd700 !important;
-    color: #fff !important;
+  .ant-menu-item {
+    background: #f2b705;
+    margin: 4px 0;
+    padding: 0 16px !important;
+    border-radius: 0;
+    height: 50px;
+    line-height: 50px;
+    width: 100%;
 
     &:hover {
-      background-color: #ffc107 !important;
+      background-color: #e6a800 !important;
     }
   }
 
-  .ant-menu-item:hover {
-    background-color: #e0a800 !important;
-    color: #fff !important;
+  .ant-menu-item-selected {
+    background-color: #e6a800 !important;
+    border-left: 3px solid #fff;
+    margin-left: 0;
+    margin-right: 0;
+
+    &:hover {
+      background-color: #e6a800 !important;
+    }
+
+    a {
+      color: #fff !important;
+      font-weight: 600;
+    }
   }
 
-  .ant-menu-submenu-selected {
-    background-color: #ffd700 !important;
-    color: #fff !important;
-  }
-
-  // Đảm bảo item active được highlight đúng
-  .ant-menu-item:active,
-  .ant-menu-item-selected:active {
-    background-color: #ffd700 !important;
-  }
-
-  // Tùy chỉnh Link trong Menu.Item
   .ant-menu-item a {
     color: #fff;
-    text-decoration: none;
+    padding-left: 12px;
 
     &:hover {
       color: #fff;
     }
   }
 
-  .ant-menu-item-selected a {
-    color: #fff !important;
+  // Override ant-design padding
+  &.ant-menu-inline {
+    .ant-menu-item {
+      margin: 0;
+      width: 100%;
+    }
   }
-
-  // Ẩn text và chỉ hiển thị icon khi collapsed là false
-  ${({ collapsed }) =>
-    !collapsed &&
-    `
-      .ant-menu-item a {
-        display: flex;
-        align-items: center;
-      }
-
-      // Ẩn text bên trong Link nhưng giữ icon
-      .ant-menu-item a > span:last-child {
-        display: none;
-      }
-
-      // Đảm bảo icon vẫn hiển thị
-      .ant-menu-item a > span:first-child {
-        margin-right: 0;
-      }
-    `}
 `;
 
 const Sidebar = ({ collapsed }) => {
+  const location = useLocation();
+
+  const getSelectedKey = () => {
+    const path = location.pathname;
+    if (path.includes("/admin/dashboard")) return "dashboard";
+    if (path.includes("/admin/recipes")) return "recipes";
+    return "";
+  };
+
   return (
     <SidebarContainer width={200} theme="light" collapsed={collapsed}>
       <SidebarHeader collapsed={collapsed}>
-        {!collapsed && <img src={logo} alt="MealMate Logo" />}
+        <img src={logo} alt="MealMate Logo" />
       </SidebarHeader>
-      <CustomMenu
-        theme="light"
-        mode="inline"
-        defaultSelectedKeys={["1"]}
-        selectedKeys={
-          window.location.pathname === "/"
-            ? ["1"]
-            : [window.location.pathname.split("/")[1] || "1"]
-        }
-        inlineIndent={12}
-        collapsed={!collapsed}
-      >
-        <Menu.Item key="1">
-          <Link to="/admin/dashboard">
-            <DashboardOutlined /> <span>Dashboard</span>
-          </Link>
+      <CustomMenu theme="light" mode="inline" selectedKeys={[getSelectedKey()]}>
+        <Menu.Item key="dashboard" icon={<DashboardOutlined />}>
+          <Link to="/admin/dashboard">Trang Chủ</Link>
         </Menu.Item>
-        <Menu.Item key="2">
-          <Link to="/admin/recipes">
-            <DashboardOutlined /> <span>Recipes</span>
-          </Link>
+        <Menu.Item key="recipes" icon={<DashboardOutlined />}>
+          <Link to="/admin/recipes">Công Thức</Link>
         </Menu.Item>
       </CustomMenu>
     </SidebarContainer>

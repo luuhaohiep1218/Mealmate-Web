@@ -19,11 +19,15 @@ const RecipeSchema = new mongoose.Schema(
     image: {
       type: String,
     },
-    category: {
-      type: String,
+    prep_time: {
+      type: Number, // in minutes
       required: true,
     },
-    preparationTime: {
+    cook_time: {
+      type: Number, // in minutes
+      required: true,
+    },
+    total_time: {
       type: Number, // in minutes
       required: true,
     },

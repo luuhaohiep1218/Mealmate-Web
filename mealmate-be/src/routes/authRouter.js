@@ -4,7 +4,8 @@ const asyncHandler = require("express-async-handler");
 const { protect, adminMiddleware } = require("../middlewares/Auth");
 const {
   register,
-  login,
+  userLogin,
+  adminLogin,
   refreshAccessToken,
   logout,
   googleAuth,
@@ -14,8 +15,10 @@ const passport = require("passport");
 
 const router = express.Router();
 
-router.post("/login", login);
+// Public routes
 router.post("/register", register);
+router.post("/user/login", userLogin);
+router.post("/admin/login", adminLogin);
 router.post("/refresh-token", refreshAccessToken);
 router.post("/logout", logout);
 router.post("/forgot-password", forgotPassword);

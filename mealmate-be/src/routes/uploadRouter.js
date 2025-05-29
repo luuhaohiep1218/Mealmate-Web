@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const { protect, adminMiddleware } = require("../middlewares/Auth");
+const { protect } = require("../middlewares/Auth");
 
 const router = express.Router();
 
@@ -24,9 +24,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// API Upload
+// ✅ API Upload 1 ảnh duy nhất
 router.post("/", protect, (req, res) => {
-  const uploadHandler = upload.array("files", 5); // Tối đa 5 ảnh
+  const uploadHandler = upload.single("file"); // chỉ nhận 1 file, field name là 'file'
 
   uploadHandler(req, res, function (err) {
     if (err instanceof multer.MulterError) {
@@ -39,24 +39,24 @@ router.post("/", protect, (req, res) => {
         .json({ message: "Lỗi server!", error: err.message });
     }
 
-    if (!req.files || req.files.length === 0) {
+    if (!req.file) {
       return res.status(400).json({ message: "Không có file nào được upload" });
     }
 
     // ✅ Trả về URL đầy đủ của ảnh
-    const fileUrls = req.files.map(
-      (file) =>
-        `${req.protocol}://${req.get("host")}/api/upload/${file.filename}`
-    );
+    const fileUrl = `${req.protocol}://${req.get("host")}/api/upload/${
+      req.file.filename
+    }`;
 
-    res.json({ message: "Upload thành công!", imageUrls: fileUrls });
+    res.json({ message: "Upload thành công!", imageUrl: fileUrl });
   });
 });
+
+// Trả ảnh về từ tên file
 router.get("/:filename", (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(uploadDir, filename);
 
-  // Kiểm tra xem file có tồn tại không
   if (fs.existsSync(filePath)) {
     res.sendFile(filePath);
   } else {

@@ -23,8 +23,7 @@ const HeroSection = () => {
 
 const HeroContainer = styled.div`
   height: 600px;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-    url("/cooking-bg.jpg");
+  background-image: url("/images/banner-food.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -34,9 +33,12 @@ const HeroContainer = styled.div`
   text-align: center;
   color: white;
   width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
 
   @media (max-width: 768px) {
     height: 400px;
+    border-radius: 15px;
   }
 `;
 
@@ -67,6 +69,7 @@ const HeroTitle = styled.h1`
   margin-bottom: 1.5rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   letter-spacing: 2px;
+  color: #ff9f1c;
 
   @media (max-width: 768px) {
     font-size: 2.5rem;
@@ -92,8 +95,8 @@ const HeroText = styled.p`
 `;
 
 const ExploreButton = styled.button`
-  background: #ff6b6b;
-  color: white;
+  background: #ff9f1c;
+  color: #011936;
   border: none;
   padding: 1.2rem 2.5rem;
   border-radius: 5px;
@@ -105,9 +108,9 @@ const ExploreButton = styled.button`
   letter-spacing: 1px;
 
   &:hover {
-    background: #ff5252;
+    background: #ff8c00;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 159, 28, 0.4);
   }
 
   @media (max-width: 768px) {

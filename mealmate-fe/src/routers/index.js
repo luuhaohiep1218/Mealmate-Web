@@ -5,7 +5,7 @@ import LoginSuccessPage from "../pages/PublicPage/LoginSuccessGooglePage";
 import AccountPage from "../pages/UserPage/AccountPage";
 import DailyMenuPage from "../pages/UserPremiumPage/DailyMenuPage";
 import ProfilePage from "../pages/UserPage/ProfilePage";
-
+import AdminLoginPage from "../pages/PublicPage/AdminLoginPage";
 import AdminLayoutComponent from "../components/Layout/AdminLayoutComponent";
 import DefaultLayoutComponent from "../components/Layout/DefaultLayoutComponent";
 
@@ -19,6 +19,10 @@ export const publicRoutes = [
   {
     path: "/login-success",
     page: LoginSuccessPage,
+  },
+  {
+    path: "/admin/login",
+    page: AdminLoginPage,
   },
 ];
 
