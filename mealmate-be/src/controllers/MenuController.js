@@ -84,12 +84,28 @@ const createMenu = asyncHandler(async (req, res) => {
   const { name, description, type, serves, tags, recipes } = req.body;
 
   if (!name || !type || !serves || !recipes) {
-    return res.status(400).json({ message: "Thiếu thông tin bắt buộc" });
+    return res.status(400).json({
+      message: "Thiếu thông tin bắt buộc",
+      details: {
+        name: !name ? "Thiếu tên thực đơn" : null,
+        type: !type ? "Thiếu loại bữa ăn" : null,
+        serves: !serves ? "Thiếu số người ăn" : null,
+        recipes: !recipes ? "Thiếu công thức" : null,
+      },
+    });
   }
 
-  // Add user ID from auth middleware
+  // Add user ID from req.user
   const newMenu = new Menu({
-    ...req.body,
+    name,
+    description,
+    type,
+    serves,
+    tags: Array.isArray(tags) ? tags : [],
+    recipes: recipes.map((r) => ({
+      recipe: r.recipe,
+      servings: parseInt(r.servings) || 1,
+    })),
     createdBy: req.user.userId,
   });
 
@@ -113,39 +129,133 @@ const createMenu = asyncHandler(async (req, res) => {
 });
 
 const updateMenu = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
+    const { name, description, type, serves, tags, recipes } = req.body;
 
-  const menu = await Menu.findById(id);
+    // Validate required fields
+    if (!name || !type || !serves || !recipes) {
+      return res.status(400).json({
+        message: "Thiếu thông tin bắt buộc",
+        details: {
+          name: !name ? "Thiếu tên thực đơn" : null,
+          type: !type ? "Thiếu loại bữa ăn" : null,
+          serves: !serves ? "Thiếu số người ăn" : null,
+          recipes: !recipes ? "Thiếu công thức" : null,
+        },
+      });
+    }
 
-  if (!menu) {
-    return res.status(404).json({ message: "Không tìm thấy thực đơn" });
-  }
+    // Validate recipes array
+    if (!Array.isArray(recipes)) {
+      return res.status(400).json({
+        message: "Định dạng công thức không hợp lệ",
+        details: "recipes phải là một mảng",
+      });
+    }
 
-  // Check if user is authorized to update this menu
-  if (menu.createdBy.toString() !== req.user.userId) {
-    res.status(403);
-    throw new Error("Không có quyền chỉnh sửa thực đơn này");
-  }
+    // Find menu with legacy check
+    const menu = await Menu.findByIdWithCreator(id);
 
-  // Update fields if provided in req.body
-  Object.assign(menu, req.body);
-  await menu.save();
+    if (!menu) {
+      return res.status(404).json({ message: "Không tìm thấy thực đơn" });
+    }
 
-  // Return populated menu
-  const updatedMenu = await Menu.findById(id)
-    .populate({
-      path: "recipes.recipe",
-      select: "name description ingredients instructions",
-    })
-    .populate({
-      path: "createdBy",
-      select: "name email",
+    // Handle legacy menus (menus without createdBy)
+    if (menu.isLegacy) {
+      const updatedMenu = await Menu.findByIdAndUpdate(
+        id,
+        {
+          name,
+          description,
+          type,
+          serves: parseInt(serves),
+          tags: Array.isArray(tags) ? tags : [],
+          recipes: recipes.map((r) => ({
+            recipe: r.recipe,
+            servings: parseInt(r.servings) || 1,
+          })),
+          createdBy: req.user.userId, // Use userId from req.user
+          updatedAt: Date.now(),
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      )
+        .populate({
+          path: "recipes.recipe",
+          select: "name description ingredients instructions",
+        })
+        .populate({
+          path: "createdBy",
+          select: "name email",
+        });
+
+      if (!updatedMenu) {
+        return res.status(500).json({
+          message: "Cập nhật thực đơn thất bại",
+          details: "Không thể cập nhật thực đơn cũ",
+        });
+      }
+
+      return res.status(200).json({
+        message: "Cập nhật thực đơn thành công",
+        menu: updatedMenu,
+      });
+    }
+
+    // For non-legacy menus, check authorization
+    if (!menu.canEdit(req.user.userId)) {
+      return res
+        .status(403)
+        .json({ message: "Không có quyền chỉnh sửa thực đơn này" });
+    }
+
+    // Update menu with new data
+    const updatedMenu = await Menu.findByIdAndUpdate(
+      id,
+      {
+        name,
+        description,
+        type,
+        serves: parseInt(serves),
+        tags: Array.isArray(tags) ? tags : [],
+        recipes: recipes.map((r) => ({
+          recipe: r.recipe,
+          servings: parseInt(r.servings) || 1,
+        })),
+        updatedAt: Date.now(),
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+      .populate({
+        path: "recipes.recipe",
+        select: "name description ingredients instructions",
+      })
+      .populate({
+        path: "createdBy",
+        select: "name email",
+      });
+
+    if (!updatedMenu) {
+      return res.status(404).json({ message: "Cập nhật thực đơn thất bại" });
+    }
+
+    res.status(200).json({
+      message: "Cập nhật thực đơn thành công",
+      menu: updatedMenu,
     });
-
-  res.status(200).json({
-    message: "Cập nhật thực đơn thành công",
-    menu: updatedMenu,
-  });
+  } catch (error) {
+    res.status(500).json({
+      message: "Lỗi server khi cập nhật thực đơn",
+      error: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
+  }
 });
 
 const deleteMenu = asyncHandler(async (req, res) => {

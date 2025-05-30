@@ -13,7 +13,7 @@ const DefaultLayoutComponent = ({ children, hasFixedHeader = false }) => {
         <MainWrapper>
           <HeaderComponent />
           <PageContainer>
-            <MainContent hasFixedHeader={hasFixedHeader}>
+            <MainContent $hasFixedHeader={hasFixedHeader}>
               {children}
             </MainContent>
           </PageContainer>
@@ -52,7 +52,7 @@ const MainContent = styled.main`
   position: relative;
 
   /* Add padding to account for the fixed header if needed */
-  padding-top: ${(props) => (props.hasFixedHeader ? "80px" : "0")};
+  padding-top: ${(props) => (props.$hasFixedHeader ? "80px" : "0")};
 `;
 
 export default DefaultLayoutComponent;

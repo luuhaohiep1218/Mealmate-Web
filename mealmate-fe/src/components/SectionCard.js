@@ -2,11 +2,11 @@ import React from "react";
 import styled from "styled-components";
 
 const SectionCard = ({ children, background = "white" }) => {
-  return <CardWrapper background={background}>{children}</CardWrapper>;
+  return <CardWrapper $background={background}>{children}</CardWrapper>;
 };
 
 const CardWrapper = styled.div`
-  background: ${(props) => props.background};
+  background: ${(props) => props.$background};
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);

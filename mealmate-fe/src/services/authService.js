@@ -52,7 +52,10 @@ export const authService = {
 
   // Google OAuth login
   googleLogin: () => {
-    window.location.href = `${API_URL}/auth/google`;
+    const callbackUrl = `${window.location.origin}/login-success`;
+    window.location.href = `${API_URL}/auth/google?callback_url=${encodeURIComponent(
+      callbackUrl
+    )}`;
   },
 
   // Handle Google OAuth callback

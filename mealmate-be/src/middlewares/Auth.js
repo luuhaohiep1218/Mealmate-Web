@@ -3,52 +3,48 @@ const asyncHandler = require("express-async-handler");
 const Account = require("../models/AccountModel"); // 🔄 Sử dụng Account thay vì User
 
 // Tạo access token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+const generateToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
 };
 
 // Tạo refresh token
-const generateRefreshToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+const generateRefreshToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: "7d",
+  });
 };
 
 // Middleware bảo vệ route
 const protect = asyncHandler(async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith("Bearer ")
-    ? authHeader.split(" ")[1]
-    : null;
+  let token;
 
-  if (!token) {
-    return res.status(401).json({ message: "Bạn chưa đăng nhập!" });
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    try {
+      token = req.headers.authorization.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Set decoded token info to req.user
+      req.user = {
+        userId: decoded.userId,
+        accountId: decoded.accountId,
+        role: decoded.role,
+      };
+
+      next();
+    } catch (error) {
+      res.status(401);
+      throw new Error("Not authorized, token failed");
+    }
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded || !decoded.id) {
-      return res.status(401).json({ message: "Token không hợp lệ" });
-    }
-
-    const account = await Account.findById(decoded.id).select("-password");
-
-    if (!account) {
-      return res.status(404).json({ message: "Tài khoản không tồn tại" });
-    }
-
-    req.user = account;
-    next();
-  } catch (error) {
-    if (error.name === "TokenExpiredError") {
-      return res
-        .status(401)
-        .json({ message: "Token đã hết hạn, vui lòng đăng nhập lại" });
-    }
-    if (error.name === "JsonWebTokenError") {
-      return res.status(401).json({ message: "Token không hợp lệ" });
-    }
-    console.error("🔥 Lỗi bảo vệ route:", error);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+  if (!token) {
+    res.status(401);
+    throw new Error("Not authorized, no token");
   }
 });
 

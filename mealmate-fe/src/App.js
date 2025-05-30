@@ -11,7 +11,9 @@ function App() {
       <Router>
         <Routes>
           {routes.map((route) => {
-            const Layout = route.layout || Fragment; // Sử dụng layout từ route, mặc định là Fragment
+            const Layout = route.layout || Fragment;
+            const Wrapper = route.wrapper || Fragment;
+
             return route.isPrivate ? (
               <Route
                 key={route.path}
@@ -29,9 +31,11 @@ function App() {
                 key={route.path}
                 path={route.path}
                 element={
-                  <Layout>
-                    <route.page />
-                  </Layout>
+                  <Wrapper>
+                    <Layout>
+                      <route.page />
+                    </Layout>
+                  </Wrapper>
                 }
               />
             );

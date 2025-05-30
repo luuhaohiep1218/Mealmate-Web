@@ -5,6 +5,7 @@ import FeaturedRecipes from "../../components/FeaturedRecipes";
 import SectionCard from "../../components/SectionCard";
 import AboutSection from "../../components/AboutSection";
 
+// Trang chủ của ứng dụng
 const HomePage = () => {
   return (
     <>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Input, Button, message, Card } from "antd";
+import { Form, Input, Button, Card } from "antd";
 import {
   LockOutlined,
   MailOutlined,
@@ -126,12 +126,33 @@ const LoginText = styled.div`
   }
 `;
 
+const MessageContainer = styled.div`
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+`;
+
+const ErrorMessage = styled(MessageContainer)`
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #ff4d4f;
+`;
+
+const SuccessMessage = styled(MessageContainer)`
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #52c41a;
+`;
+
 const AdminLoginPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const { setUser, setIsAuthenticated } = useMealMate();
+  const [loginMessage, setLoginMessage] = useState({ type: "", content: "" });
 
-  // Check if user is already logged in as admin
+  // Kiểm tra xem người dùng đã đăng nhập với vai trò admin chưa
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     const userInfo = JSON.parse(sessionStorage.getItem("userInfo") || "{}");
@@ -146,6 +167,7 @@ const AdminLoginPage = () => {
   const onFinish = async (values) => {
     try {
       setLoading(true);
+      setLoginMessage({ type: "", content: "" }); // Reset message
       const response = await api.post(endpoints.auth.adminLogin, values);
 
       if (response.accessToken) {
@@ -154,30 +176,73 @@ const AdminLoginPage = () => {
 
         // Kiểm tra role trước khi chuyển hướng
         if (response.role === "ADMIN") {
-          // Cập nhật context
+          // Cập nhật context và lưu thông tin user
           const userInfo = {
             role: response.role,
             full_name: response.full_name,
             phone: response.phone,
+            email: response.email,
           };
+          sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
           setUser(userInfo);
           setIsAuthenticated(true);
 
-          message.success("Đăng nhập thành công!");
-          navigate("/admin/dashboard", { replace: true });
+          setLoginMessage({
+            type: "success",
+            content: "Đăng nhập thành công! Chào mừng quản trị viên.",
+          });
+
+          // Chờ 1 giây trước khi chuyển hướng để người dùng thấy thông báo
+          setTimeout(() => {
+            navigate("/admin/dashboard", { replace: true });
+          }, 1000);
         } else {
-          message.error("Tài khoản không có quyền truy cập!");
+          setLoginMessage({
+            type: "error",
+            content: "Tài khoản không có quyền truy cập vào trang quản trị!",
+          });
           // Xóa token nếu không phải admin
           sessionStorage.removeItem("token");
+          sessionStorage.removeItem("userInfo");
           setUser(null);
           setIsAuthenticated(false);
         }
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
-      message.error(errorMessage);
+      let errorMessage = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!";
+
+      // Xử lý các trường hợp lỗi cụ thể
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            errorMessage = "Email hoặc mật khẩu không đúng định dạng!";
+            break;
+          case 401:
+            errorMessage = "Email hoặc mật khẩu không chính xác!";
+            break;
+          case 403:
+            errorMessage = "Tài khoản của bạn không có quyền truy cập!";
+            break;
+          case 404:
+            errorMessage = "Tài khoản không tồn tại trong hệ thống!";
+            break;
+          case 500:
+            errorMessage = "Lỗi hệ thống, vui lòng thử lại sau!";
+            break;
+          default:
+            errorMessage =
+              error.response.data?.message ||
+              "Đăng nhập thất bại. Vui lòng thử lại!";
+        }
+      } else if (error.request) {
+        errorMessage =
+          "Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối!";
+      }
+
+      setLoginMessage({
+        type: "error",
+        content: errorMessage,
+      });
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -188,47 +253,58 @@ const AdminLoginPage = () => {
   return (
     <PageContainer>
       <BackButton onClick={() => navigate("/")} icon={<ArrowLeftOutlined />}>
-        Back to Home
+        Quay lại Trang chủ
       </BackButton>
       <StyledCard>
         <Logo src={logo} alt="MealMate Logo" />
-        <Title>Admin Login</Title>
+        <Title>Đăng nhập Admin</Title>
+
+        {/* Hiển thị thông báo */}
+        {loginMessage.content &&
+          (loginMessage.type === "error" ? (
+            <ErrorMessage>{loginMessage.content}</ErrorMessage>
+          ) : (
+            <SuccessMessage>{loginMessage.content}</SuccessMessage>
+          ))}
+
         <StyledForm name="admin_login" onFinish={onFinish} layout="vertical">
           <Form.Item
             name="email"
             rules={[
-              { required: true, message: "Please input your email!" },
-              { type: "email", message: "Please enter a valid email!" },
+              { required: true, message: "Vui lòng nhập email!" },
+              { type: "email", message: "Vui lòng nhập email hợp lệ!" },
             ]}
           >
             <Input
               prefix={<MailOutlined />}
-              placeholder="Enter your Email"
+              placeholder="Nhập email của bạn"
               size="large"
+              autoComplete="username"
             />
           </Form.Item>
 
           <Form.Item
             name="password"
-            rules={[{ required: true, message: "Please input your password!" }]}
+            rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder="Enter your Password"
+              placeholder="Nhập mật khẩu của bạn"
               size="large"
+              autoComplete="current-password"
             />
           </Form.Item>
 
           <Form.Item>
             <StyledButton type="primary" htmlType="submit" loading={loading}>
-              Sign In
+              Đăng nhập
             </StyledButton>
           </Form.Item>
         </StyledForm>
 
         <LoginText>
-          Not an admin?
-          <Link to="/">User Login</Link>
+          Không phải là admin?
+          <Link to="/">Đăng nhập người dùng</Link>
         </LoginText>
       </StyledCard>
     </PageContainer>

@@ -1,6 +1,10 @@
 import React from "react";
 import { Layout, Menu } from "antd";
-import { DashboardOutlined } from "@ant-design/icons";
+import {
+  DashboardOutlined,
+  BookOutlined,
+  AppstoreOutlined,
+} from "@ant-design/icons";
 import logo from "../../assets/images/logo-mealmate-removebg-preview.png"; // Import logo
 import styled from "styled-components";
 import { Link, useLocation } from "react-router-dom"; // Import Link and useLocation
@@ -21,22 +25,30 @@ const SidebarContainer = styled(Sider)`
     .sidebar-header {
       justify-content: center;
     }
+
+    .ant-menu-item {
+      padding-left: 28px !important;
+
+      .anticon {
+        font-size: 20px;
+      }
+    }
   }
 `;
 
-const SidebarHeader = styled.div`
+const StyledHeader = styled.div`
   height: 64px;
   margin: 16px;
   padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+`;
 
-  img {
-    height: ${(props) => (props.collapsed ? "32px" : "48px")};
-    width: auto;
-    transition: all 0.3s ease;
-  }
+const LogoImage = styled.img`
+  height: ${({ $collapsed }) => ($collapsed ? "32px" : "48px")};
+  width: auto;
+  transition: all 0.3s ease;
 `;
 
 const CustomMenu = styled(Menu)`
@@ -56,6 +68,11 @@ const CustomMenu = styled(Menu)`
     height: 50px;
     line-height: 50px;
     width: 100%;
+
+    .anticon {
+      font-size: 18px;
+      margin-right: 10px;
+    }
 
     &:hover {
       background-color: #e6a800 !important;
@@ -103,22 +120,45 @@ const Sidebar = ({ collapsed }) => {
     const path = location.pathname;
     if (path.includes("/admin/dashboard")) return "dashboard";
     if (path.includes("/admin/recipes")) return "recipes";
+    if (path.includes("/admin/menus")) return "menus";
     return "";
   };
 
+  const menuItems = [
+    {
+      key: "dashboard",
+      icon: <DashboardOutlined />,
+      label: <Link to="/admin/dashboard">Trang Chủ</Link>,
+    },
+    {
+      key: "recipes",
+      icon: <BookOutlined />,
+      label: <Link to="/admin/recipes">Công Thức</Link>,
+    },
+    {
+      key: "menus",
+      icon: <AppstoreOutlined />,
+      label: <Link to="/admin/menus">Thực Đơn</Link>,
+    },
+  ];
+
   return (
-    <SidebarContainer width={200} theme="light" collapsed={collapsed}>
-      <SidebarHeader collapsed={collapsed}>
-        <img src={logo} alt="MealMate Logo" />
-      </SidebarHeader>
-      <CustomMenu theme="light" mode="inline" selectedKeys={[getSelectedKey()]}>
-        <Menu.Item key="dashboard" icon={<DashboardOutlined />}>
-          <Link to="/admin/dashboard">Trang Chủ</Link>
-        </Menu.Item>
-        <Menu.Item key="recipes" icon={<DashboardOutlined />}>
-          <Link to="/admin/recipes">Công Thức</Link>
-        </Menu.Item>
-      </CustomMenu>
+    <SidebarContainer
+      width={200}
+      theme="light"
+      collapsible
+      trigger={null}
+      collapsed={collapsed}
+    >
+      <StyledHeader>
+        <LogoImage $collapsed={collapsed} src={logo} alt="MealMate Logo" />
+      </StyledHeader>
+      <CustomMenu
+        theme="light"
+        mode="inline"
+        selectedKeys={[getSelectedKey()]}
+        items={menuItems}
+      />
     </SidebarContainer>
   );
 };
