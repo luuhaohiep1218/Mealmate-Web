@@ -5,11 +5,15 @@ import LoginSuccessPage from "../pages/PublicPage/LoginSuccessGooglePage";
 import AccountPage from "../pages/UserPage/AccountPage";
 import DailyMenuPage from "../pages/UserPremiumPage/DailyMenuPage";
 import ProfilePage from "../pages/UserPage/ProfilePage";
+import ChangePasswordPage from "../pages/UserPage/ChangePasswordPage";
 import AdminLoginPage from "../pages/PublicPage/AdminLoginPage";
 import AdminLayoutComponent from "../components/Layout/AdminLayoutComponent";
 import DefaultLayoutComponent from "../components/Layout/DefaultLayoutComponent";
+import AdminMenuPage from "../pages/AdminPage/AdminMenuPage";
+import NotFoundPage from "../pages/PublicPage/NotFoundPage";
+import AdminLoginRoute from "../components/AdminLoginRoute";
 
-// Public routes (không cần đăng nhập)
+// Các tuyến đường công khai (không cần đăng nhập)
 export const publicRoutes = [
   {
     path: "/",
@@ -23,10 +27,11 @@ export const publicRoutes = [
   {
     path: "/admin/login",
     page: AdminLoginPage,
+    wrapper: AdminLoginRoute,
   },
 ];
 
-// Admin routes
+// Các tuyến đường quản trị
 export const adminRoutes = [
   {
     path: "/admin/dashboard",
@@ -42,9 +47,16 @@ export const adminRoutes = [
     isPrivate: true,
     allowedRoles: ["ADMIN"],
   },
+  {
+    path: "/admin/menus",
+    page: AdminMenuPage,
+    layout: AdminLayoutComponent,
+    isPrivate: true,
+    allowedRoles: ["ADMIN"],
+  },
 ];
 
-// User routes
+// Các tuyến đường người dùng
 export const userRoutes = [
   {
     path: "/account",
@@ -64,7 +76,24 @@ export const userRoutes = [
     layout: DefaultLayoutComponent,
     isPrivate: true,
   },
+  {
+    path: "/account/change-password",
+    page: ChangePasswordPage,
+    layout: DefaultLayoutComponent,
+    isPrivate: true,
+  },
 ];
 
-// Combine all routes
-export const routes = [...publicRoutes, ...adminRoutes, ...userRoutes];
+// Tuyến đường không tìm thấy
+export const notFoundRoute = {
+  path: "*",
+  page: NotFoundPage,
+};
+
+// Kết hợp tất cả các tuyến đường
+export const routes = [
+  ...publicRoutes,
+  ...adminRoutes,
+  ...userRoutes,
+  notFoundRoute,
+];

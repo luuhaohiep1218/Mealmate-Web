@@ -8,13 +8,14 @@ const HeroSection = () => {
   return (
     <HeroContainer>
       <HeroContent>
-        <HeroTitle>UNLEASH CULINARY EXCELLENCE</HeroTitle>
+        <HeroTitle>KHÁM PHÁ ẨM THỰC TUYỆT VỜI</HeroTitle>
         <HeroText>
-          Explore a world of flavors, discover handcrafted recipes, and let the
-          aroma of our passion for cooking fill your kitchen
+          Khám phá thế giới hương vị, trải nghiệm những công thức nấu ăn độc
+          đáo, và để hương thơm từ niềm đam mê nấu nướng tràn ngập căn bếp của
+          bạn
         </HeroText>
         <ExploreButton onClick={() => navigate("/recipes")}>
-          EXPLORE RECIPES
+          KHÁM PHÁ CÔNG THỨC
         </ExploreButton>
       </HeroContent>
     </HeroContainer>

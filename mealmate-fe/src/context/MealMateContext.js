@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { message } from "antd";
 import { authService } from "../services/authService";
+import { api, endpoints } from "../utils/axiosInstance";
 
 // Create context
 const MealMateContext = createContext();
@@ -29,6 +30,8 @@ export const MealMateProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       const token = sessionStorage.getItem("token");
+      const storedUserInfo = sessionStorage.getItem("userInfo");
+
       if (!token) {
         setUser(null);
         setIsAuthenticated(false);
@@ -36,20 +39,34 @@ export const MealMateProvider = ({ children }) => {
         return;
       }
 
+      if (storedUserInfo) {
+        // Nếu có thông tin user trong sessionStorage, sử dụng nó
+        const userInfo = JSON.parse(storedUserInfo);
+        setUser(userInfo);
+        setIsAuthenticated(true);
+        setLoading(false);
+        return;
+      }
+
+      // Nếu không có thông tin user trong sessionStorage, gọi API
       const userInfo = await authService.getCurrentUser();
       if (userInfo) {
         setUser(userInfo);
         setIsAuthenticated(true);
+        // Lưu thông tin user vào sessionStorage
+        sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
       } else {
         setUser(null);
         setIsAuthenticated(false);
         sessionStorage.removeItem("token");
+        sessionStorage.removeItem("userInfo");
       }
     } catch (error) {
       console.error("Auth check error:", error);
       setUser(null);
       setIsAuthenticated(false);
       sessionStorage.removeItem("token");
+      sessionStorage.removeItem("userInfo");
     } finally {
       setLoading(false);
     }
@@ -63,21 +80,37 @@ export const MealMateProvider = ({ children }) => {
       // Store token in sessionStorage
       sessionStorage.setItem("token", response.accessToken);
 
-      // Update user state
+      // Lấy thông tin user profile đầy đủ từ API
+      const userProfile = await api.get(endpoints.user.profile);
+
+      if (!userProfile) {
+        throw new Error("Failed to get user profile");
+      }
+
+      // Update user state with complete profile
       const userInfo = {
-        role: response.role,
-        full_name: response.full_name,
-        phone: response.phone,
+        _id: userProfile._id,
+        full_name: userProfile.full_name,
+        email: userProfile.email,
+        phone: userProfile.phone,
+        role: userProfile.role,
+        profile_picture: userProfile.profile_picture,
+        authProvider: userProfile.authProvider,
       };
+
+      // Update context and sessionStorage
       setUser(userInfo);
       setIsAuthenticated(true);
       setShowLoginModal(false);
+      sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
 
-      message.success("Logged in successfully!");
-      return response;
+      message.success("Đăng nhập thành công!");
+      return userInfo;
     } catch (error) {
       setUser(null);
       setIsAuthenticated(false);
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("userInfo");
       throw error;
     }
   };
@@ -137,25 +170,50 @@ export const MealMateProvider = ({ children }) => {
   const handleGoogleCallback = async (token) => {
     try {
       if (!token) {
-        throw new Error("No token received");
+        throw new Error("No token provided");
       }
 
-      // Get user info using the token
-      const userInfo = await authService.handleGoogleCallback(token);
+      // Set token in sessionStorage
+      sessionStorage.setItem("token", token);
 
-      if (!userInfo) {
-        throw new Error("No user info received");
+      // Get user profile with the token
+      const response = await authService.handleGoogleCallback(token);
+
+      if (!response) {
+        throw new Error("Failed to get user profile");
       }
 
-      // Update user state
+      // Lấy thông tin user profile từ API
+      const userProfile = await api.get(endpoints.user.profile);
+
+      if (!userProfile) {
+        throw new Error("Failed to get user profile");
+      }
+
+      // Create user info object with profile picture
+      const userInfo = {
+        _id: userProfile._id,
+        full_name: userProfile.full_name,
+        email: userProfile.email,
+        phone: userProfile.phone,
+        role: userProfile.role,
+        authProvider: userProfile.authProvider,
+        profile_picture: userProfile.profile_picture,
+      };
+
+      // Update context state
       setUser(userInfo);
       setIsAuthenticated(true);
       setShowLoginModal(false);
 
+      // Save user info to sessionStorage
+      sessionStorage.setItem("userInfo", JSON.stringify(userInfo));
+
       return userInfo;
     } catch (error) {
-      console.error("Google callback error in context:", error);
+      console.error("Error in handleGoogleCallback:", error);
       sessionStorage.removeItem("token");
+      sessionStorage.removeItem("userInfo");
       setUser(null);
       setIsAuthenticated(false);
       throw error;
@@ -170,7 +228,9 @@ export const MealMateProvider = ({ children }) => {
   // Context value
   const value = {
     user,
+    setUser,
     isAuthenticated,
+    setIsAuthenticated,
     loading,
     showLoginModal,
     setShowLoginModal,

@@ -6,7 +6,7 @@ import { Spin, message } from "antd";
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, loading, user, setShowLoginModal } = useMealMate();
 
-  // Show loading spinner while checking authentication
+  // Hiển thị loading spinner khi đang kiểm tra xác thực
   if (loading) {
     return (
       <div
@@ -22,16 +22,16 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     );
   }
 
-  // If not authenticated, redirect to home and show login modal
+  // Nếu chưa đăng nhập, chuyển hướng về trang chủ và hiển thị modal đăng nhập
   if (!isAuthenticated) {
-    message.warning("Please login to access this page");
+    message.warning("Vui lòng đăng nhập để truy cập trang này");
     setShowLoginModal(true);
     return <Navigate to="/" replace />;
   }
 
-  // Check role-based access
+  // Kiểm tra quyền truy cập dựa trên vai trò
   if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
-    message.error("You do not have permission to access this page");
+    message.error("Bạn không có quyền truy cập trang này");
     return <Navigate to="/" replace />;
   }
 

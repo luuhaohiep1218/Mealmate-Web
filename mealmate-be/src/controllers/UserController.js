@@ -6,7 +6,6 @@ const User = require("../models/UserModel");
 
 const updateUserProfile = asyncHandler(async (req, res) => {
   const {
-    _id,
     full_name,
     phone,
     gender,
@@ -18,92 +17,110 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     proteinGoal,
     fatGoal,
     carbGoal,
+    profile_picture,
   } = req.body;
 
-  // Validate _id
-  if (!_id || !mongoose.Types.ObjectId.isValid(_id)) {
-    res.status(400);
-    throw new Error("Valid user ID is required");
-  }
+  try {
+    // Lấy user ID từ token thông qua req.user
+    const userId = req.user.userId;
 
-  // Find the user by ID
-  const user = await User.findById(_id);
-  if (!user) {
-    console.error(`User not found for _id: ${_id}`);
-    res.status(404);
-    throw new Error("Người dùng không tồn tại");
-  }
-
-  // Build the updated fields object
-  const updatedFields = {};
-
-  if (full_name) updatedFields.full_name = full_name.trim();
-  if (phone) {
-    if (!/^\d{10}$/.test(phone)) {
+    // Validate userId
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       res.status(400);
-      throw new Error("Phone number must be exactly 10 digits");
+      throw new Error("Invalid user ID from token");
     }
-    updatedFields.phone = phone;
-  }
-  if (gender && ["male", "female", "other"].includes(gender)) {
-    updatedFields.gender = gender;
-  }
-  if (date_of_birth) {
-    const parsedDate = new Date(date_of_birth);
-    if (!isNaN(parsedDate)) {
-      updatedFields.date_of_birth = parsedDate;
-    } else {
-      res.status(400);
-      throw new Error("Invalid date of birth");
-    }
-  }
-  if (job) updatedFields.job = job.trim();
-  if (height !== undefined && height >= 0) {
-    updatedFields.height = Number(height);
-  }
-  if (weight !== undefined && weight >= 0) {
-    updatedFields.weight = Number(weight);
-  }
-  if (calorieGoal !== undefined && calorieGoal >= 0) {
-    updatedFields.calorieGoal = Number(calorieGoal);
-  }
-  if (proteinGoal !== undefined && proteinGoal >= 0) {
-    updatedFields.proteinGoal = Number(proteinGoal);
-  }
-  if (fatGoal !== undefined && fatGoal >= 0) {
-    updatedFields.fatGoal = Number(fatGoal);
-  }
-  if (carbGoal !== undefined && carbGoal >= 0) {
-    updatedFields.carbGoal = Number(carbGoal);
-  }
 
-  // Update the user with validated fields
-  const updatedUser = await User.findByIdAndUpdate(
-    _id,
-    { $set: updatedFields },
-    {
-      new: true,
-      runValidators: true,
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error(`User not found for _id: ${userId}`);
+      res.status(404);
+      throw new Error("Người dùng không tồn tại");
     }
-  );
 
-  // Return the updated user data
-  res.status(200).json({
-    _id: updatedUser._id,
-    full_name: updatedUser.full_name,
-    phone: updatedUser.phone,
-    gender: updatedUser.gender,
-    date_of_birth: updatedUser.date_of_birth,
-    job: updatedUser.job,
-    height: updatedUser.height,
-    weight: updatedUser.weight,
-    calorieGoal: updatedUser.calorieGoal,
-    proteinGoal: updatedUser.proteinGoal,
-    fatGoal: updatedUser.fatGoal,
-    carbGoal: updatedUser.carbGoal,
-    createdAt: updatedUser.createdAt,
-    updatedAt: updatedUser.updatedAt,
-  });
+    // Build the updated fields object
+    const updatedFields = {};
+
+    if (full_name) updatedFields.full_name = full_name.trim();
+    if (phone) {
+      if (!/^\d{10}$/.test(phone)) {
+        res.status(400);
+        throw new Error("Số điện thoại phải có đúng 10 chữ số");
+      }
+      updatedFields.phone = phone;
+    }
+    if (gender && ["male", "female", "other"].includes(gender)) {
+      updatedFields.gender = gender;
+    }
+    if (date_of_birth) {
+      const parsedDate = new Date(date_of_birth);
+      if (!isNaN(parsedDate)) {
+        updatedFields.date_of_birth = parsedDate;
+      } else {
+        res.status(400);
+        throw new Error("Ngày sinh không hợp lệ");
+      }
+    }
+    if (job) updatedFields.job = job.trim();
+    if (height !== undefined && height >= 0) {
+      updatedFields.height = Number(height);
+    }
+    if (weight !== undefined && weight >= 0) {
+      updatedFields.weight = Number(weight);
+    }
+    if (calorieGoal !== undefined && calorieGoal >= 0) {
+      updatedFields.calorieGoal = Number(calorieGoal);
+    }
+    if (proteinGoal !== undefined && proteinGoal >= 0) {
+      updatedFields.proteinGoal = Number(proteinGoal);
+    }
+    if (fatGoal !== undefined && fatGoal >= 0) {
+      updatedFields.fatGoal = Number(fatGoal);
+    }
+    if (carbGoal !== undefined && carbGoal >= 0) {
+      updatedFields.carbGoal = Number(carbGoal);
+    }
+    if (profile_picture) {
+      updatedFields.profile_picture = profile_picture;
+    }
+
+    // Update the user with validated fields
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updatedFields },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).populate("account", "email role authProvider");
+
+    // Return the updated user data
+    res.status(200).json({
+      _id: updatedUser._id,
+      full_name: updatedUser.full_name,
+      email: updatedUser.account.email,
+      phone: updatedUser.phone,
+      role: updatedUser.account.role,
+      authProvider: updatedUser.account.authProvider,
+      profile_picture: updatedUser.profile_picture,
+      gender: updatedUser.gender,
+      date_of_birth: updatedUser.date_of_birth,
+      job: updatedUser.job,
+      height: updatedUser.height,
+      weight: updatedUser.weight,
+      calorieGoal: updatedUser.calorieGoal,
+      proteinGoal: updatedUser.proteinGoal,
+      fatGoal: updatedUser.fatGoal,
+      carbGoal: updatedUser.carbGoal,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
+    });
+  } catch (error) {
+    console.error("Error in updateUserProfile:", error);
+    res.status(error.status || 500).json({
+      message: error.message || "Lỗi server khi cập nhật thông tin người dùng",
+    });
+  }
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
@@ -169,15 +186,22 @@ const getUsers = asyncHandler(async (req, res) => {
 
 const getProfileUser = asyncHandler(async (req, res) => {
   try {
-    const user = await User.findOne({ account: req.user._id })
+    // Lấy userId từ token đã được decode trong middleware protect
+    const { userId } = req.user;
+
+    // Tìm user và populate thông tin account
+    const user = await User.findById(userId)
       .select("-password_hash -refreshToken")
       .populate("account", "email role authProvider");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin người dùng" });
     }
 
-    res.json({
+    // Tạo object response với đầy đủ thông tin
+    const userResponse = {
       _id: user._id,
       full_name: user.full_name,
       email: user.account.email,
@@ -185,7 +209,6 @@ const getProfileUser = asyncHandler(async (req, res) => {
       role: user.account.role,
       authProvider: user.account.authProvider,
       profile_picture: user.profile_picture,
-      avatar: user.profile_picture,
       gender: user.gender,
       date_of_birth: user.date_of_birth,
       job: user.job,
@@ -196,11 +219,14 @@ const getProfileUser = asyncHandler(async (req, res) => {
       fatGoal: user.fatGoal,
       carbGoal: user.carbGoal,
       createdAt: user.createdAt,
-    });
+      updatedAt: user.updatedAt,
+    };
+
+    res.json(userResponse);
   } catch (error) {
     console.error("Error in getProfileUser:", error);
     res.status(500).json({
-      message: "Internal Server Error",
+      message: "Lỗi server khi lấy thông tin người dùng",
       error: error.message,
     });
   }

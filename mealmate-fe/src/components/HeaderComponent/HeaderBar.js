@@ -59,6 +59,10 @@ const HeaderBar = ({ collapsed, setCollapsed }) => {
     },
   ];
 
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => !prev);
+  };
+
   return (
     <Header
       style={{
@@ -74,7 +78,7 @@ const HeaderBar = ({ collapsed, setCollapsed }) => {
         <Button
           type="text"
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
           style={{
             fontSize: "16px",
             width: 64,

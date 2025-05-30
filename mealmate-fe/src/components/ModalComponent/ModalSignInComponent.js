@@ -101,7 +101,11 @@ const ModalSignInComponent = ({ isOpen, onClose }) => {
               { max: 50, message: "Họ và tên không được quá 50 ký tự" },
             ]}
           >
-            <Input placeholder="Nhập họ và tên" size="large" />
+            <Input
+              placeholder="Nhập họ và tên"
+              size="large"
+              autoComplete="name"
+            />
           </Form.Item>
         )}
 
@@ -114,7 +118,11 @@ const ModalSignInComponent = ({ isOpen, onClose }) => {
             { max: 50, message: "Email không được quá 50 ký tự" },
           ]}
         >
-          <Input placeholder="Nhập email" size="large" />
+          <Input
+            placeholder="Nhập email"
+            size="large"
+            autoComplete="username"
+          />
         </Form.Item>
 
         <Form.Item
@@ -126,7 +134,11 @@ const ModalSignInComponent = ({ isOpen, onClose }) => {
             { max: 50, message: "Mật khẩu không được quá 50 ký tự" },
           ]}
         >
-          <Input.Password placeholder="Nhập mật khẩu" size="large" />
+          <Input.Password
+            placeholder="Nhập mật khẩu"
+            size="large"
+            autoComplete="current-password"
+          />
         </Form.Item>
 
         {isSignUp && (
@@ -148,7 +160,11 @@ const ModalSignInComponent = ({ isOpen, onClose }) => {
               }),
             ]}
           >
-            <Input.Password placeholder="Xác nhận mật khẩu" size="large" />
+            <Input.Password
+              placeholder="Xác nhận mật khẩu"
+              size="large"
+              autoComplete="new-password"
+            />
           </Form.Item>
         )}
 
@@ -161,7 +177,11 @@ const ModalSignInComponent = ({ isOpen, onClose }) => {
               { pattern: /^[0-9]{10}$/, message: "Số điện thoại không hợp lệ" },
             ]}
           >
-            <Input placeholder="Nhập số điện thoại" size="large" />
+            <Input
+              placeholder="Nhập số điện thoại"
+              size="large"
+              autoComplete="tel"
+            />
           </Form.Item>
         )}
 

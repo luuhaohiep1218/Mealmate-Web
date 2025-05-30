@@ -4,23 +4,24 @@ import styled from "styled-components";
 const AboutSection = () => {
   return (
     <AboutContainer>
-      <AboutTag>ABOUT US</AboutTag>
+      <AboutTag>VỀ CHÚNG TÔI</AboutTag>
       <AboutContent>
-        <AboutTitle>OUR CULINARY CHRONICLE</AboutTitle>
+        <AboutTitle>CÂU CHUYỆN ẨM THỰC</AboutTitle>
         <AboutDescription>
-          Our journey is crafted with dedication, creativity, and an unrelenting
-          commitment to delivering delightful culinary experiences. Join us in
-          savoring the essence of every dish and the stories that unfold.
+          Hành trình của chúng tôi được tạo nên từ sự tận tâm, sáng tạo và cam
+          kết không ngừng mang đến những trải nghiệm ẩm thực tuyệt vời. Hãy cùng
+          chúng tôi thưởng thức tinh hoa của từng món ăn và những câu chuyện thú
+          vị đằng sau chúng.
         </AboutDescription>
-        <ReadMoreButton>READ MORE</ReadMoreButton>
+        <ReadMoreButton>XEM THÊM</ReadMoreButton>
       </AboutContent>
       <ImageGrid>
         <MainImage>
-          <img src="/images/cooking-process.jpg" alt="Cooking process" />
+          <img src="/images/cooking-process.jpg" alt="Quá trình nấu ăn" />
         </MainImage>
         <SideImages>
-          <img src="/images/grilled-salmon.jpg" alt="Grilled salmon" />
-          <img src="/images/chef-preparing.jpg" alt="Chef preparing food" />
+          <img src="/images/grilled-salmon.jpg" alt="Cá hồi nướng" />
+          <img src="/images/chef-preparing.jpg" alt="Đầu bếp đang chuẩn bị" />
         </SideImages>
       </ImageGrid>
     </AboutContainer>

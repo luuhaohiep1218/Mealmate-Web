@@ -21,13 +21,14 @@ const SideNav = () => {
           location.pathname.length === path.length))
     );
   };
+  console.log("user", user.authProvider);
 
   return (
     <SideNavContainer>
       <ProfileImage>
         <img
           src={user.profile_picture || "/images/profile-art.jpg"}
-          alt="Profile Art"
+          alt="Ảnh đại diện"
         />
       </ProfileImage>
       <NavLinks>
@@ -35,46 +36,51 @@ const SideNav = () => {
           to="/account"
           className={isActiveRoute("/account") ? "active" : ""}
         >
-          Account Overview
+          Tổng quan tài khoản
         </NavLink>
         <NavLink
           to="/account/profile"
           className={isActiveRoute("/account/profile") ? "active" : ""}
         >
-          Profile
+          Hồ sơ cá nhân
         </NavLink>
+        {/* Chỉ hiển thị nút đổi mật khẩu nếu không phải đăng nhập bằng Google */}
+        {user?.authProvider !== "google" && (
+          <NavLink
+            to="/account/change-password"
+            className={
+              isActiveRoute("/account/change-password") ? "active" : ""
+            }
+          >
+            Đổi mật khẩu
+          </NavLink>
+        )}
         <NavLink
           to="/account/daily-menu"
           className={isActiveRoute("/account/daily-menu") ? "active" : ""}
         >
-          Daily Menu
+          Thực đơn hàng ngày
         </NavLink>
         <NavLink
           to="/meal-planner"
           className={isActiveRoute("/meal-planner") ? "active" : ""}
         >
-          Meal Planner
-        </NavLink>
-        <NavLink
-          to="/nutrition-tracking"
-          className={isActiveRoute("/nutrition-tracking") ? "active" : ""}
-        >
-          Nutrition Tracking
+          Lập kế hoạch bữa ăn
         </NavLink>
         <NavLink
           to="/account/subscription"
           className={isActiveRoute("/account/subscription") ? "active" : ""}
         >
-          Subscription
+          Gói dịch vụ
         </NavLink>
         <NavLink
           to="/account/settings"
           className={isActiveRoute("/account/settings") ? "active" : ""}
         >
-          Settings
+          Cài đặt
         </NavLink>
         <NavLink onClick={logout} className="danger">
-          Logout
+          Đăng xuất
         </NavLink>
       </NavLinks>
     </SideNavContainer>

@@ -6,24 +6,24 @@ const PaletteSection = () => {
   const navigate = useNavigate();
 
   const categories = [
-    { id: 1, name: "BREAKFEST", icon: "🍳" },
-    { id: 2, name: "LUNCH", icon: "🥗" },
-    { id: 3, name: "DINNER", icon: "🍽️" },
-    { id: 4, name: "DESSERT", icon: "🍰" },
-    { id: 5, name: "QUICK BITE!", icon: "🥪" },
+    { id: 1, name: "BỮA SÁNG", icon: "🍳" },
+    { id: 2, name: "BỮA TRƯA", icon: "🥗" },
+    { id: 3, name: "BỮA TỐI", icon: "🍽️" },
+    { id: 4, name: "TRÁNG MIỆNG", icon: "🍰" },
+    { id: 5, name: "ĂN VẶT", icon: "🥪" },
   ];
 
   return (
     <PaletteContainer>
       <LeftContent>
-        <ExploreTag>EXPLORE</ExploreTag>
-        <Title>OUR DIVERSE PALETTE</Title>
+        <ExploreTag>KHÁM PHÁ</ExploreTag>
+        <Title>THỰC ĐƠN ĐA DẠNG</Title>
         <Description>
-          If you are a breakfast enthusiast, a connoisseur of savory delights,
-          or on the lookout for irresistible desserts, our curated selection has
-          something to satisfy every palate.
+          Nếu bạn là người yêu thích bữa sáng, một người sành ăn với các món
+          ngon, hoặc đang tìm kiếm những món tráng miệng hấp dẫn, bộ sưu tập của
+          chúng tôi có đủ món để thỏa mãn mọi khẩu vị.
         </Description>
-        <SeeMoreButton>SEE MORE</SeeMoreButton>
+        <SeeMoreButton>XEM THÊM</SeeMoreButton>
       </LeftContent>
 
       <RightContent>

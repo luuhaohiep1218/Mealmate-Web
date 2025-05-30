@@ -21,7 +21,7 @@ const FeaturedRecipes = () => {
       setRecipes(response.data);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching recipes:", error);
+      console.error("Lỗi khi tải công thức:", error);
       setLoading(false);
     }
   };
@@ -50,70 +50,39 @@ const FeaturedRecipes = () => {
   }
 
   return (
-    <FeaturedContainer>
-      <Header>
-        <Title>FEATURED RECIPES</Title>
-        <NavigationButtons>
-          <NavButton
-            onClick={handlePrevious}
-            disabled={currentPage === 0}
-            aria-label="Previous recipe"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M15 18L9 12L15 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </NavButton>
-          <NavButton
-            onClick={handleNext}
-            disabled={
-              currentPage >= Math.ceil(recipes.length / recipesPerPage) - 1
-            }
-            aria-label="Next recipe"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M9 18L15 12L9 6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </NavButton>
-        </NavigationButtons>
-      </Header>
-
+    <Container>
+      <Title>Công Thức Nổi Bật</Title>
+      <Description>
+        Khám phá những công thức nấu ăn được yêu thích nhất của cộng đồng
+      </Description>
       <RecipeGrid>
         {displayedRecipes.map((recipe) => (
-          <RecipeCard
-            key={recipe._id}
-            onClick={() => navigate(`/recipe/${recipe._id}`)}
-          >
+          <RecipeCard key={recipe._id}>
             <RecipeImage src={recipe.image} alt={recipe.name} />
-            <RecipeContent>
-              <RecipeTitle>{recipe.name}</RecipeTitle>
+            <RecipeInfo>
+              <RecipeName>{recipe.name}</RecipeName>
               <RecipeDescription>{recipe.description}</RecipeDescription>
-              <RecipeInfo>
-                <RecipeTime>
-                  <ClockIcon>⏰</ClockIcon>
-                  {recipe.preparationTime} mins
-                </RecipeTime>
-                <RecipeRating>
-                  <StarIcon>⭐</StarIcon>
-                  {recipe.rating.toFixed(1)}
-                </RecipeRating>
-              </RecipeInfo>
-            </RecipeContent>
+              <ViewButton onClick={() => navigate(`/recipes/${recipe._id}`)}>
+                Xem Chi Tiết
+              </ViewButton>
+            </RecipeInfo>
           </RecipeCard>
         ))}
       </RecipeGrid>
-    </FeaturedContainer>
+      <NavigationButtons>
+        <NavButton onClick={handlePrevious} disabled={currentPage === 0}>
+          Trước
+        </NavButton>
+        <NavButton
+          onClick={handleNext}
+          disabled={
+            currentPage === Math.ceil(recipes.length / recipesPerPage) - 1
+          }
+        >
+          Tiếp
+        </NavButton>
+      </NavigationButtons>
+    </Container>
   );
 };
 
@@ -124,19 +93,12 @@ const LoadingContainer = styled.div`
   min-height: 400px;
 `;
 
-const FeaturedContainer = styled.section`
+const Container = styled.section`
   padding: 3rem;
 
   @media (max-width: 768px) {
     padding: 2rem;
   }
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
 `;
 
 const Title = styled.h2`
@@ -145,35 +107,11 @@ const Title = styled.h2`
   font-weight: 700;
 `;
 
-const NavigationButtons = styled.div`
-  display: flex;
-  gap: 1rem;
-`;
-
-const NavButton = styled.button`
-  background: none;
-  border: 2px solid #ff9f1c;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #ff9f1c;
-
-  &:hover:not(:disabled) {
-    background: #ff9f1c;
-    color: white;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    border-color: #ccc;
-    color: #ccc;
-  }
+const Description = styled.p`
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
 `;
 
 const RecipeGrid = styled.div`
@@ -216,14 +154,14 @@ const RecipeImage = styled.img`
   }
 `;
 
-const RecipeContent = styled.div`
+const RecipeInfo = styled.div`
   flex: 1;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
 `;
 
-const RecipeTitle = styled.h3`
+const RecipeName = styled.h3`
   font-size: 1.4rem;
   color: #333;
   margin-bottom: 1rem;
@@ -238,36 +176,54 @@ const RecipeDescription = styled.p`
   flex: 1;
 `;
 
-const RecipeInfo = styled.div`
+const ViewButton = styled.button`
+  background: none;
+  border: 2px solid #ff9f1c;
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #ff9f1c;
+  font-weight: 600;
+
+  &:hover {
+    background: #ff9f1c;
+    color: white;
+  }
+`;
+
+const NavigationButtons = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 2rem;
 `;
 
-const RecipeTime = styled.div`
+const NavButton = styled.button`
+  background: none;
+  border: 2px solid #ff9f1c;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: #666;
-  font-size: 0.9rem;
-`;
-
-const RecipeRating = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
   color: #ff9f1c;
-  font-weight: 600;
-  font-size: 0.9rem;
-`;
 
-const ClockIcon = styled.span`
-  font-size: 1rem;
-`;
+  &:hover:not(:disabled) {
+    background: #ff9f1c;
+    color: white;
+  }
 
-const StarIcon = styled.span`
-  font-size: 1rem;
-  color: #ff9f1c;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #ccc;
+    color: #ccc;
+  }
 `;
 
 export default FeaturedRecipes;

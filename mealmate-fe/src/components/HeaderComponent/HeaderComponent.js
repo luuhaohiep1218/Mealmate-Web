@@ -80,16 +80,16 @@ const HeaderComponent = () => {
           <NavContent className={isMenuOpen ? "open" : ""}>
             <NavLinks>
               <NavLink className="active" onClick={() => navigate("/")}>
-                HOME
+                TRANG CHỦ
               </NavLink>
-              <NavLink onClick={() => navigate("/recipes")}>RECIPES</NavLink>
-              <NavLink onClick={() => navigate("/menus")}>MENU</NavLink>
-              <NavLink onClick={() => navigate("/blogs")}>BLOG</NavLink>
+              <NavLink onClick={() => navigate("/recipes")}>CÔNG THỨC</NavLink>
+              <NavLink onClick={() => navigate("/menus")}>THỰC ĐƠN</NavLink>
+              <NavLink onClick={() => navigate("/blogs")}>BÀI VIẾT</NavLink>
             </NavLinks>
           </NavContent>
 
           <NavRight>
-            <SearchButton>
+            {/* <SearchButton>
               <SearchIcon>
                 <svg
                   width="18"
@@ -114,7 +114,7 @@ const HeaderComponent = () => {
                   />
                 </svg>
               </SearchIcon>
-            </SearchButton>
+            </SearchButton> */}
             {renderAuthButton()}
           </NavRight>
 

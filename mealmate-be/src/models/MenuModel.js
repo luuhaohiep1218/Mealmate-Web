@@ -9,6 +9,7 @@ const MenuSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true,
     },
     description: {
       type: String,
@@ -47,5 +48,26 @@ const MenuSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Add method to check if a user can edit this menu
+MenuSchema.methods.canEdit = function (userId) {
+  return this.createdBy && this.createdBy.toString() === userId;
+};
+
+// Add static method to handle legacy menus without createdBy
+MenuSchema.statics.findByIdWithCreator = async function (id) {
+  const menu = await this.findById(id);
+  if (!menu) return null;
+
+  // If menu exists but has no creator, it's a legacy menu
+  if (!menu.createdBy) {
+    return {
+      ...menu.toObject(),
+      isLegacy: true,
+    };
+  }
+
+  return menu;
+};
 
 module.exports = mongoose.model("Menu", MenuSchema);

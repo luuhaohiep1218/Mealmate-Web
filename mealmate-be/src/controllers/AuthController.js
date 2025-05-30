@@ -105,10 +105,24 @@ const userLogin = asyncHandler(async (req, res) => {
     throw new Error("Access denied. This endpoint is for users only.");
   }
 
+  // Get corresponding user data
+  const user = await User.findOne({ account: account._id });
+  if (!user) {
+    res.status(404);
+    throw new Error("User profile not found");
+  }
+
   // Compare password
   if (await bcrypt.compare(password, account.password_hash)) {
-    const accessToken = generateToken(account._id);
-    const refreshToken = generateRefreshToken(account._id);
+    // Include both accountId and userId in token payload
+    const tokenPayload = {
+      accountId: account._id,
+      userId: user._id,
+      role: account.role,
+    };
+
+    const accessToken = generateToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
 
     // Save refresh token
     account.refreshToken = refreshToken;
@@ -121,14 +135,13 @@ const userLogin = asyncHandler(async (req, res) => {
       maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
     });
 
-    // Get corresponding user data
-    const user = await User.findOne({ account: account._id });
-
     res.json({
       accessToken,
+      userId: user._id,
+      accountId: account._id,
       role: account.role,
-      full_name: user ? user.full_name : "",
-      phone: user ? user.phone : "",
+      full_name: user.full_name,
+      phone: user.phone,
     });
   } else {
     res.status(401);
@@ -158,10 +171,24 @@ const adminLogin = asyncHandler(async (req, res) => {
     throw new Error("Access denied. This endpoint is for administrators only.");
   }
 
+  // Get corresponding user data
+  const user = await User.findOne({ account: account._id });
+  if (!user) {
+    res.status(404);
+    throw new Error("User profile not found");
+  }
+
   // Compare password
   if (await bcrypt.compare(password, account.password_hash)) {
-    const accessToken = generateToken(account._id);
-    const refreshToken = generateRefreshToken(account._id);
+    // Include both accountId and userId in token payload
+    const tokenPayload = {
+      accountId: account._id,
+      userId: user._id,
+      role: account.role,
+    };
+
+    const accessToken = generateToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
 
     // Save refresh token
     account.refreshToken = refreshToken;
@@ -174,14 +201,13 @@ const adminLogin = asyncHandler(async (req, res) => {
       maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
     });
 
-    // Get corresponding user data
-    const user = await User.findOne({ account: account._id });
-
     res.json({
       accessToken,
+      userId: user._id,
+      accountId: account._id,
       role: account.role,
-      full_name: user ? user.full_name : "",
-      phone: user ? user.phone : "",
+      full_name: user.full_name,
+      phone: user.phone,
     });
   } else {
     res.status(401);
@@ -283,9 +309,15 @@ const googleAuth = asyncHandler(async (req, res) => {
       await user.save();
     }
 
-    // Tạo token
-    const accessToken = generateToken(account._id);
-    const refreshToken = generateRefreshToken(account._id);
+    // Tạo token với payload giống như login thông thường
+    const tokenPayload = {
+      accountId: account._id,
+      userId: user._id,
+      role: account.role,
+    };
+
+    const accessToken = generateToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
 
     // Lưu refreshToken vào DB
     account.refreshToken = refreshToken;
@@ -299,8 +331,22 @@ const googleAuth = asyncHandler(async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000, // 1 ngày
     });
 
-    // Redirect kèm accessToken
-    return res.redirect(`${FRONTEND_URL}/login-success?token=${accessToken}`);
+    // Redirect kèm accessToken và thông tin user
+    const redirectUrl = new URL(`${FRONTEND_URL}/login-success`);
+    redirectUrl.searchParams.append("token", accessToken);
+    redirectUrl.searchParams.append(
+      "userInfo",
+      JSON.stringify({
+        userId: user._id,
+        accountId: account._id,
+        role: account.role,
+        full_name: user.full_name,
+        email: account.email,
+        profile_picture: user.profile_picture,
+      })
+    );
+
+    return res.redirect(redirectUrl.toString());
   } catch (error) {
     console.error("Google Auth Error:", error);
     return res.redirect(`${FRONTEND_URL}/login?error=auth_failed`);
