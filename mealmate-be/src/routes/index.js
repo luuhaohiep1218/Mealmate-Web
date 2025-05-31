@@ -8,6 +8,7 @@ const geminiAiRouter = require("../routes/geminiAiRouter");
 const dailyMenuRouter = require("../routes/dailyMenuRouter");
 const menuRouter = require("../routes/menuRouter");
 const blogRouter = require("../routes/blogRouter");
+const blogCategoryRouter = require("../routes/blogCategoryRouter");
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use("/gemini-ai", geminiAiRouter);
 router.use("/daily", dailyMenuRouter);
 router.use("/menus", menuRouter);
 router.use("/blogs", blogRouter);
+router.use("/blog-categories", blogCategoryRouter);
 
 module.exports = router;
