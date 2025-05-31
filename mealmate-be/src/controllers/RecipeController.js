@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const aqp = require("api-query-params");
 const Recipe = require("../models/RecipeModel");
+const { createSlug, createUniqueSlug } = require("../utils/slugify");
 
 const getAllRecipes = asyncHandler(async (req, res) => {
   // Parse query parameters using api-query-params
@@ -24,11 +25,28 @@ const getAllRecipes = asyncHandler(async (req, res) => {
     };
   }
 
+  // Handle multiple sort conditions
+  let sortOptions = {};
+  if (sort) {
+    if (typeof sort === "object") {
+      // If sort is already an object (from aqp), use it directly
+      sortOptions = sort;
+    } else if (typeof sort === "string") {
+      // If sort is a string (e.g., "-rating,-views"), convert to object
+      sortOptions = sort.split(",").reduce((acc, item) => {
+        const isDesc = item.startsWith("-");
+        const key = isDesc ? item.substring(1) : item;
+        acc[key] = isDesc ? -1 : 1;
+        return acc;
+      }, {});
+    }
+  }
+
   // Execute the query with filters, sorting, pagination, etc.
   const recipes = await Recipe.find(filter)
     .skip(skip)
     .limit(limit)
-    .sort(sort)
+    .sort(sortOptions)
     .select(projection)
     .populate(population);
 
@@ -60,8 +78,30 @@ const getRecipeById = asyncHandler(async (req, res) => {
     throw new Error("Recipe not found");
   }
 
+  // Tăng số lượt xem
+  recipe.views = (recipe.views || 0) + 1;
+  await recipe.save();
+
   res.status(200).json(recipe);
 });
+
+const getRecipeBySlug = asyncHandler(async (req, res) => {
+  const { slug } = req.params;
+
+  const recipe = await Recipe.findOne({ slug });
+
+  if (!recipe) {
+    res.status(404);
+    throw new Error("Không tìm thấy công thức");
+  }
+
+  // Tăng lượt xem
+  recipe.views += 1;
+  await recipe.save();
+
+  res.status(200).json(recipe);
+});
+
 const createRecipe = asyncHandler(async (req, res) => {
   const {
     name,
@@ -101,14 +141,26 @@ const createRecipe = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Cần ít nhất một bước thực hiện" });
   }
 
+  // Tạo slug từ tên công thức
+  const baseSlug = createSlug(name);
+
+  // Kiểm tra slug đã tồn tại
+  const checkExisting = async (slug) => {
+    return await Recipe.findOne({ slug });
+  };
+
+  // Tạo slug duy nhất
+  const uniqueSlug = await createUniqueSlug(baseSlug, checkExisting);
+
   // Create new recipe with validated data
   const newRecipe = new Recipe({
     name: name.trim(),
+    slug: uniqueSlug,
     description: description.trim(),
     image,
     prep_time,
     cook_time,
-    total_time: total_time || prep_time + cook_time, // Calculate if not provided
+    total_time: total_time || prep_time + cook_time,
     servings,
     ingredients: ingredients.map((ing) => ({
       name: ing.name.trim(),
@@ -148,6 +200,15 @@ const updateRecipe = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Không tìm thấy món ăn" });
   }
 
+  // Nếu tên thay đổi, cập nhật slug
+  if (req.body.name && req.body.name !== recipe.name) {
+    const baseSlug = createSlug(req.body.name);
+    const checkExisting = async (slug) => {
+      return await Recipe.findOne({ slug, _id: { $ne: id } });
+    };
+    req.body.slug = await createUniqueSlug(baseSlug, checkExisting);
+  }
+
   // Cập nhật các trường nếu có trong req.body
   Object.assign(recipe, req.body);
 
@@ -158,6 +219,7 @@ const updateRecipe = asyncHandler(async (req, res) => {
     recipe,
   });
 });
+
 const deleteRecipe = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -171,6 +233,7 @@ const deleteRecipe = asyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Xoá món ăn thành công" });
 });
+
 const deleteManyRecipes = asyncHandler(async (req, res) => {
   const { ids } = req.body;
 
@@ -191,6 +254,7 @@ const deleteManyRecipes = asyncHandler(async (req, res) => {
 module.exports = {
   getAllRecipes,
   getRecipeById,
+  getRecipeBySlug,
   createRecipe,
   updateRecipe,
   deleteRecipe,

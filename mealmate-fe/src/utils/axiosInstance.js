@@ -88,14 +88,13 @@ axiosInstance.interceptors.response.use(
 // API endpoints
 export const endpoints = {
   auth: {
-    userLogin: "/auth/user/login",
-    adminLogin: "/auth/admin/login",
+    login: "/auth/login",
     register: "/auth/register",
-    logout: "/auth/logout",
     refreshToken: "/auth/refresh-token",
+    logout: "/auth/logout",
     forgotPassword: "/auth/forgot-password",
-    google: "/auth/google",
-    googleCallback: "/auth/google/callback",
+    resetPassword: "/auth/reset-password",
+    verifyEmail: "/auth/verify-email",
   },
   user: {
     profile: "/users/profile",
@@ -106,18 +105,41 @@ export const endpoints = {
   recipes: {
     list: "/recipes",
     detail: (id) => `/recipes/${id}`,
+    bySlug: (slug) => `/recipes/${slug}/by-slug`,
     create: "/recipes",
     update: (id) => `/recipes/${id}`,
     delete: (id) => `/recipes/${id}`,
-    deleteMany: "/recipes",
+    deleteMany: "/recipes/delete-many",
+    topRated: "/recipes?sort=-rating,-views",
+    topViewed: "/recipes?sort=-views,-rating",
   },
   menus: {
     list: "/menus",
     detail: (id) => `/menus/${id}`,
+    bySlug: (slug) => `/menus/${slug}/by-slug`,
     create: "/menus",
     update: (id) => `/menus/${id}`,
     delete: (id) => `/menus/${id}`,
-    deleteMany: "/menus",
+    deleteMany: "/menus/delete-many",
+  },
+  blogs: {
+    list: "/blogs",
+    detail: (id) => `/blogs/${id}`,
+    bySlug: (slug) => `/blogs/${slug}/by-slug`,
+    create: "/blogs",
+    update: (id) => `/blogs/${id}`,
+    delete: (id) => `/blogs/${id}`,
+    deleteMany: "/blogs/delete-many",
+    topViews: "/blogs?sort=-views",
+  },
+  blogCategories: {
+    list: "/blog-categories",
+    detail: (id) => `/blog-categories/${id}`,
+    bySlug: (slug) => `/blog-categories/${slug}/by-slug`,
+    create: "/blog-categories",
+    update: (id) => `/blog-categories/${id}`,
+    delete: (id) => `/blog-categories/${id}`,
+    deleteMany: "/blog-categories/delete-many",
   },
 };
 

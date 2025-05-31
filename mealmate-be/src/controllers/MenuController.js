@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const aqp = require("api-query-params");
 const Menu = require("../models/MenuModel");
+const { createSlug, createUniqueSlug } = require("../utils/slugify");
 
 const getAllMenus = asyncHandler(async (req, res) => {
   const { filter, skip, limit, sort, projection, population } = aqp(req.query);
@@ -91,6 +92,27 @@ const getMenuById = asyncHandler(async (req, res) => {
   res.status(200).json(menu);
 });
 
+const getMenuBySlug = asyncHandler(async (req, res) => {
+  const { slug } = req.params;
+
+  const menu = await Menu.findOne({ slug })
+    .populate({
+      path: "recipes.recipe",
+      select: "name description ingredients instructions",
+    })
+    .populate({
+      path: "createdBy",
+      select: "name email",
+    });
+
+  if (!menu) {
+    res.status(404);
+    throw new Error("Không tìm thấy thực đơn");
+  }
+
+  res.status(200).json(menu);
+});
+
 const createMenu = asyncHandler(async (req, res) => {
   const { name, description, type, serves, tags, recipes } = req.body;
 
@@ -106,9 +128,21 @@ const createMenu = asyncHandler(async (req, res) => {
     });
   }
 
+  // Tạo slug từ tên thực đơn
+  const baseSlug = createSlug(name);
+
+  // Kiểm tra slug đã tồn tại
+  const checkExisting = async (slug) => {
+    return await Menu.findOne({ slug });
+  };
+
+  // Tạo slug duy nhất
+  const uniqueSlug = await createUniqueSlug(baseSlug, checkExisting);
+
   // Add user ID from req.user
   const newMenu = new Menu({
     name,
+    slug: uniqueSlug,
     description,
     type,
     serves,
@@ -172,12 +206,23 @@ const updateMenu = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy thực đơn" });
     }
 
+    // Tạo slug mới nếu tên thay đổi
+    let newSlug;
+    if (name && name !== menu.name) {
+      const baseSlug = createSlug(name);
+      const checkExisting = async (slug) => {
+        return await Menu.findOne({ slug, _id: { $ne: id } });
+      };
+      newSlug = await createUniqueSlug(baseSlug, checkExisting);
+    }
+
     // Handle legacy menus (menus without createdBy)
     if (menu.isLegacy) {
       const updatedMenu = await Menu.findByIdAndUpdate(
         id,
         {
           name,
+          slug: newSlug || menu.slug,
           description,
           type,
           serves: parseInt(serves),
@@ -313,6 +358,7 @@ const deleteManyMenus = asyncHandler(async (req, res) => {
 module.exports = {
   getAllMenus,
   getMenuById,
+  getMenuBySlug,
   createMenu,
   updateMenu,
   deleteMenu,

@@ -15,6 +15,9 @@ import AdminLoginRoute from "../components/AdminLoginRoute";
 import MenuPage from "../pages/PublicPage/MenuPage";
 import MenuDetailPage from "../pages/PublicPage/MenuDetailPage";
 import MenuRecipePage from "../pages/PublicPage/MenuRecipePage";
+import HomeBlogPage from "../pages/PublicPage/HomeBlogPage";
+import AllBlogPage from "../pages/PublicPage/AllBlogPage";
+import CategoryBlogPage from "../pages/PublicPage/CategoryBlogPage";
 
 // Các tuyến đường công khai (không cần đăng nhập)
 export const publicRoutes = [
@@ -45,6 +48,21 @@ export const publicRoutes = [
   {
     path: "/recipes/:id",
     page: MenuRecipePage,
+    layout: DefaultLayoutComponent,
+  },
+  {
+    path: "/blogs",
+    page: HomeBlogPage,
+    layout: DefaultLayoutComponent,
+  },
+  {
+    path: "/blogs/all-blogs",
+    page: AllBlogPage,
+    layout: DefaultLayoutComponent,
+  },
+  {
+    path: "/blogs/category/:slug",
+    page: CategoryBlogPage,
     layout: DefaultLayoutComponent,
   },
 ];

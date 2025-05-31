@@ -12,6 +12,15 @@ const RecipeSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
     description: {
       type: String,
       required: true,
@@ -62,8 +71,29 @@ const RecipeSchema = new mongoose.Schema(
       min: 0,
       max: 5,
     },
+    views: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
+
+// Middleware để tự động tạo slug từ name trước khi lưu
+RecipeSchema.pre("save", function (next) {
+  if (!this.isModified("name")) {
+    return next();
+  }
+
+  // Chuyển name thành slug
+  this.slug = this.name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "") // Xóa các ký tự đặc biệt
+    .replace(/\s+/g, "-") // Thay khoảng trắng bằng dấu gạch ngang
+    .replace(/-+/g, "-") // Xóa các dấu gạch ngang liên tiếp
+    .trim(); // Xóa khoảng trắng đầu cuối
+
+  next();
+});
 
 module.exports = mongoose.model("Recipe", RecipeSchema);

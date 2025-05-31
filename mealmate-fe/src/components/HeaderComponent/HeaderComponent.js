@@ -4,7 +4,7 @@ import GlobalStyle from "../GlobalStyle";
 import ModalSignInComponent from "../ModalComponent/ModalSignInComponent";
 import { useMealMate } from "../../context/MealMateContext";
 import { Avatar, Image } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { UserOutlined } from "@ant-design/icons";
 import LogoImage from "../../assets/logo/logo-mealmate-removebg-preview.png";
 
@@ -13,6 +13,11 @@ const HeaderComponent = () => {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
   const { isAuthenticated, user } = useMealMate();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
 
   const renderAuthButton = () => {
     if (isAuthenticated && user) {
@@ -79,12 +84,30 @@ const HeaderComponent = () => {
 
           <NavContent className={isMenuOpen ? "open" : ""}>
             <NavLinks>
-              <NavLink className="active" onClick={() => navigate("/")}>
+              <NavLink
+                className={isActive("/") ? "active" : ""}
+                onClick={() => navigate("/")}
+              >
                 TRANG CHỦ
               </NavLink>
-              <NavLink onClick={() => navigate("/recipes")}>CÔNG THỨC</NavLink>
-              <NavLink onClick={() => navigate("/menus")}>THỰC ĐƠN</NavLink>
-              <NavLink onClick={() => navigate("/blogs")}>BÀI VIẾT</NavLink>
+              <NavLink
+                className={isActive("/recipes") ? "active" : ""}
+                onClick={() => navigate("/recipes")}
+              >
+                CÔNG THỨC
+              </NavLink>
+              <NavLink
+                className={isActive("/menus") ? "active" : ""}
+                onClick={() => navigate("/menus")}
+              >
+                THỰC ĐƠN
+              </NavLink>
+              <NavLink
+                className={isActive("/blogs") ? "active" : ""}
+                onClick={() => navigate("/blogs")}
+              >
+                BÀI VIẾT
+              </NavLink>
             </NavLinks>
           </NavContent>
 

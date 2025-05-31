@@ -6,6 +6,15 @@ const MenuSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -48,6 +57,23 @@ const MenuSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Middleware để tự động tạo slug từ name trước khi lưu
+MenuSchema.pre("save", function (next) {
+  if (!this.isModified("name")) {
+    return next();
+  }
+
+  // Chuyển name thành slug
+  this.slug = this.name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "") // Xóa các ký tự đặc biệt
+    .replace(/\s+/g, "-") // Thay khoảng trắng bằng dấu gạch ngang
+    .replace(/-+/g, "-") // Xóa các dấu gạch ngang liên tiếp
+    .trim(); // Xóa khoảng trắng đầu cuối
+
+  next();
+});
 
 // Add method to check if a user can edit this menu
 MenuSchema.methods.canEdit = function (userId) {
