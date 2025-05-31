@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import FeedbackForm from "../../components/UserFeedbackComponent/FeedbackForm";
+import FeedbackList from "../../components/UserFeedbackComponent/FeedbackList";
 
 const MenuRecipePage = () => {
   const { id } = useParams();
@@ -9,6 +11,11 @@ const MenuRecipePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [feedbacks, setFeedbacks] = useState([]);
+
+  const handleFeedbackSubmitted = (newFeedback) => {
+    setFeedbacks((prev) => [newFeedback, ...prev]);
+  };
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -55,91 +62,66 @@ const MenuRecipePage = () => {
         <InfoItem>👨‍🍳 Người tạo: {recipe.createdBy?.name || "Ẩn danh"}</InfoItem>
       </Info>
 
-      {/* <Section>
-        <SectionHeader>🥗 Nguyên liệu:</SectionHeader>
-        {recipe.ingredients?.length > 0 ? (
-          <ul>
-            {recipe.ingredients.map((item, i) => (
-              <li key={i}>
-                {item.name} - {item.quantity}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Chưa có thông tin nguyên liệu.</p>
-        )}
-      </Section>
+      <TwoColumnLayout>
+        <LeftColumn>
+          <Card className="instructions">
+            <CardHeader>👨‍🍳 Cách làm</CardHeader>
+            {recipe.steps?.length > 0 ? (
+              <ol>
+                {recipe.steps.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            ) : (
+              <p>Chưa có hướng dẫn chế biến.</p>
+            )}
+          </Card>
+        </LeftColumn>
+
+        <RightColumn>
+          <Card>
+            <CardHeader>🥗 Nguyên liệu</CardHeader>
+            {recipe.ingredients?.length > 0 ? (
+              <ul>
+                {recipe.ingredients.map((item, i) => (
+                  <li key={i}>
+                    {item.name} - {item.quantity}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Chưa có thông tin nguyên liệu.</p>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader>🍎 Giá trị dinh dưỡng</CardHeader>
+            {recipe.nutrition ? (
+              <div>
+                <p>• Calories: {recipe.calories} kcal</p>
+                <p>• Protein: {recipe.nutrition.protein}g</p>
+                <p>• Fat: {recipe.nutrition.fat}g</p>
+                <p>• Carbs: {recipe.nutrition.carbs}g</p>
+              </div>
+            ) : (
+              <p>Không có dữ liệu dinh dưỡng.</p>
+            )}
+          </Card>
+        </RightColumn>
+      </TwoColumnLayout>
+
+      <FeedbackSection>
+        <SectionHeader>⭐ Đánh giá món ăn</SectionHeader>
+        <p>Trung bình: {recipe.rating?.toFixed(1) || "Chưa có"} / 5</p>
+        <FeedbackForm
+          recipeId={recipe._id}
+          onSubmitted={handleFeedbackSubmitted}
+        />
+      </FeedbackSection>
 
       <Section>
-        <SectionHeader>👨‍🍳 Cách làm:</SectionHeader>
-        {recipe.steps?.length > 0 ? (
-          <ol>
-            {recipe.steps.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
-        ) : (
-          <p>Chưa có hướng dẫn chế biến.</p>
-        )}
+        <FeedbackList recipeId={recipe._id} newFeedbacks={feedbacks} />
       </Section>
-
-      <Section>
-        <SectionHeader>🍎 Giá trị dinh dưỡng:</SectionHeader>
-        {recipe.nutrition ? (
-          <p>
-            Calories: {recipe.calories} kcal • Protein:{" "}
-            {recipe.nutrition.protein}g • Fat: {recipe.nutrition.fat}g • Carbs:{" "}
-            {recipe.nutrition.carbs}g
-          </p>
-        ) : (
-          <p>Không có dữ liệu dinh dưỡng.</p>
-        )}
-      </Section> */}
-
-      <CardsContainer>
-        <Card>
-          <CardHeader>🥗 Nguyên liệu</CardHeader>
-          {recipe.ingredients?.length > 0 ? (
-            <ul>
-              {recipe.ingredients.map((item, i) => (
-                <li key={i}>
-                  {item.name} - {item.quantity}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Chưa có thông tin nguyên liệu.</p>
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader>👨‍🍳 Cách làm</CardHeader>
-          {recipe.steps?.length > 0 ? (
-            <ol>
-              {recipe.steps.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-          ) : (
-            <p>Chưa có hướng dẫn chế biến.</p>
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader>🍎 Giá trị dinh dưỡng</CardHeader>
-          {recipe.nutrition ? (
-            <p>
-              Calories: {recipe.calories} kcal
-              <br />
-              Protein: {recipe.nutrition.protein}g<br />
-              Fat: {recipe.nutrition.fat}g<br />
-              Carbs: {recipe.nutrition.carbs}g
-            </p>
-          ) : (
-            <p>Không có dữ liệu dinh dưỡng.</p>
-          )}
-        </Card>
-      </CardsContainer>
 
       <BackButtonWrapper>
         <BackButton onClick={() => navigate(-1)}>Quay lại</BackButton>
@@ -252,12 +234,6 @@ const BackButton = styled.button`
     background-color: #45a049;
   }
 `;
-const CardsContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-`;
 
 const Card = styled.div`
   background: #fefefe;
@@ -284,6 +260,23 @@ const Card = styled.div`
   p {
     margin: 0.5rem 0;
   }
+
+  &.instructions {
+    height: 450px; /* chiều cao cố định */
+    overflow-y: auto; /* thanh cuộn dọc */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #ccc #fefefe;
+
+    &::-webkit-scrollbar {
+      /* Chrome, Edge, Safari */
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #ccc;
+      border-radius: 4px;
+    }
+  }
 `;
 
 const CardHeader = styled.h3`
@@ -291,4 +284,39 @@ const CardHeader = styled.h3`
   font-weight: 600;
   margin-bottom: 1rem;
   color: #2c3e50;
+`;
+const TwoColumnLayout = styled.div`
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const LeftColumn = styled.div`
+  flex: 2;
+`;
+
+const RightColumn = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const FeedbackSection = styled.div`
+  margin-top: 3rem;
+  background: #fefefe;
+  padding: 2rem;
+  border-top: 1px solid #ddd;
+  text-align: center;
+
+  p {
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+  }
 `;

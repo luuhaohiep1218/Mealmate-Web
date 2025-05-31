@@ -9,6 +9,7 @@ const dailyMenuRouter = require("../routes/dailyMenuRouter");
 const menuRouter = require("../routes/menuRouter");
 const blogRouter = require("../routes/blogRouter");
 const blogCategoryRouter = require("../routes/blogCategoryRouter");
+const feedbackRouter = require("../routes/feedbackRouter");
 
 const router = express.Router();
 
@@ -22,5 +23,7 @@ router.use("/daily", dailyMenuRouter);
 router.use("/menus", menuRouter);
 router.use("/blogs", blogRouter);
 router.use("/blog-categories", blogCategoryRouter);
+//router feedback
+router.use("/feedback", feedbackRouter);
 
 module.exports = router;
