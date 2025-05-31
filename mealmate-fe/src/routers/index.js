@@ -12,6 +12,9 @@ import DefaultLayoutComponent from "../components/Layout/DefaultLayoutComponent"
 import AdminMenuPage from "../pages/AdminPage/AdminMenuPage";
 import NotFoundPage from "../pages/PublicPage/NotFoundPage";
 import AdminLoginRoute from "../components/AdminLoginRoute";
+import MenuPage from "../pages/PublicPage/MenuPage";
+import MenuDetailPage from "../pages/PublicPage/MenuDetailPage";
+import MenuRecipePage from "../pages/PublicPage/MenuRecipePage";
 
 // Các tuyến đường công khai (không cần đăng nhập)
 export const publicRoutes = [
@@ -28,6 +31,21 @@ export const publicRoutes = [
     path: "/admin/login",
     page: AdminLoginPage,
     wrapper: AdminLoginRoute,
+  },
+  {
+    path: "/menus",
+    page: MenuPage,
+    layout: DefaultLayoutComponent,
+  },
+  {
+    path: "/menus/:id",
+    page: MenuDetailPage,
+    layout: DefaultLayoutComponent,
+  },
+  {
+    path: "/recipes/:id",
+    page: MenuRecipePage,
+    layout: DefaultLayoutComponent,
   },
 ];
 

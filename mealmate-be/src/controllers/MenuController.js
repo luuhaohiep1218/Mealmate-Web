@@ -5,7 +5,7 @@ const Menu = require("../models/MenuModel");
 const getAllMenus = asyncHandler(async (req, res) => {
   const { filter, skip, limit, sort, projection, population } = aqp(req.query);
 
-  // Add custom search logic for name and description
+  // Search logic
   if (filter.search) {
     filter.$or = [
       { name: { $regex: filter.search, $options: "i" } },
@@ -14,7 +14,7 @@ const getAllMenus = asyncHandler(async (req, res) => {
     delete filter.search;
   }
 
-  // Add custom logic for tags
+  // Tags filtering
   if (filter.tags) {
     filter.tags = {
       $all: Array.isArray(filter.tags)
@@ -23,14 +23,14 @@ const getAllMenus = asyncHandler(async (req, res) => {
     };
   }
 
-  // Add filter for menu type if provided
+  // Type filtering
   if (filter.type) {
     filter.type = Array.isArray(filter.type)
       ? { $in: filter.type }
       : filter.type;
   }
 
-  // Execute query with filters and populate recipes
+  // Fetch menus
   const menus = await Menu.find(filter)
     .skip(skip)
     .limit(limit)
@@ -45,19 +45,30 @@ const getAllMenus = asyncHandler(async (req, res) => {
       select: "name email",
     });
 
+  // Get all unique tags in the collection
+  const tagAgg = await Menu.aggregate([
+    { $unwind: "$tags" },
+    { $group: { _id: "$tags" } },
+    { $sort: { _id: 1 } },
+  ]);
+  const allTags = tagAgg.map((t) => t._id);
+
   const total = await Menu.countDocuments(filter);
 
   if (menus.length === 0) {
     return res.status(404).json({ message: "Không tìm thấy thực đơn phù hợp" });
   }
 
+  // 👇 Trả về menus kèm danh sách tag
   res.status(200).json({
     total,
     skip,
     limit,
+    tags: allTags, // <- thêm ở đây
     data: menus,
   });
 });
+
 
 const getMenuById = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -65,7 +76,7 @@ const getMenuById = asyncHandler(async (req, res) => {
   const menu = await Menu.findById(id)
     .populate({
       path: "recipes.recipe",
-      select: "name description ingredients instructions",
+      select: "name description ingredients steps image prep_time cook_time total_time calories nutrition"
     })
     .populate({
       path: "createdBy",
