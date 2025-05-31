@@ -7,6 +7,7 @@ const {
   updateMenu,
   deleteMenu,
   deleteManyMenus,
+  getMenuBySlug,
 } = require("../controllers/MenuController");
 const { protect, adminMiddleware } = require("../middlewares/Auth");
 
@@ -21,5 +22,7 @@ router.put("/:id", protect, adminMiddleware, updateMenu);
 router.delete("/:id", protect, adminMiddleware, deleteMenu);
 
 router.delete("/", protect, adminMiddleware, deleteManyMenus);
+
+router.get("/:slug/by-slug", getMenuBySlug);
 
 module.exports = router;

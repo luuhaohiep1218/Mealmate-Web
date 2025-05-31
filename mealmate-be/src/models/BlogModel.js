@@ -9,14 +9,22 @@ const SectionSchema = new mongoose.Schema({
 const BlogSchema = new mongoose.Schema(
   {
     category: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BlogCategory",
       required: true,
-      trim: true,
     },
 
     title: {
       type: String,
       required: true,
+      trim: true,
+    },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
       trim: true,
     },
 
@@ -33,10 +41,10 @@ const BlogSchema = new mongoose.Schema(
     sections: [SectionSchema],
 
     author: {
-      type: String,
-      required: false,
-      trim: true,
-    }, // Người viết blog (hoặc userId nếu liên kết với User)
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     tags: [
       {
@@ -57,6 +65,23 @@ const BlogSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Middleware để tự động tạo slug từ title trước khi lưu
+BlogSchema.pre("save", function (next) {
+  if (!this.isModified("title")) {
+    return next();
+  }
+
+  // Chuyển title thành slug
+  this.slug = this.title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "") // Xóa các ký tự đặc biệt
+    .replace(/\s+/g, "-") // Thay khoảng trắng bằng dấu gạch ngang
+    .replace(/-+/g, "-") // Xóa các dấu gạch ngang liên tiếp
+    .trim(); // Xóa khoảng trắng đầu cuối
+
+  next();
+});
 
 const Blog = mongoose.model("Blog", BlogSchema);
 
